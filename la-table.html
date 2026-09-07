@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Table — salle de jeu de rôle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<style>
+  :root{
+    --ink:#1b1815;
+    --panel:#242019;
+    --panel-2:#2c2720;
+    --parchment:#ede6d6;
+    --parchment-dim:#a89f8c;
+    --brass:#c08a3e;
+    --brass-bright:#e0aa5c;
+    --ember:#a23b3b;
+    --line: rgba(237,230,214,0.12);
+    --radius: 10px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 20% -10%, rgba(192,138,62,0.10), transparent 45%),
+      radial-gradient(circle at 90% 110%, rgba(162,59,59,0.08), transparent 40%),
+      var(--ink);
+    color:var(--parchment);
+    font-family:'Inter', sans-serif;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+  }
+  h1,h2,h3, .display{ font-family:'Fraunces', serif; font-weight:500; letter-spacing:0.2px; }
+
+  .screen{ display:none; flex:1; }
+  .screen.active{ display:flex; }
+
+  /* ---------- Accueil ---------- */
+  #screen-home{
+    align-items:center;
+    justify-content:center;
+    padding:32px 20px;
+  }
+  .home-wrap{
+    width:100%;
+    max-width:920px;
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:56px;
+    align-items:center;
+  }
+  .home-hero h1{
+    font-size:clamp(2.4rem, 5vw, 3.4rem);
+    line-height:1.05;
+    margin:0 0 14px;
+    color:var(--parchment);
+  }
+  .home-hero p{
+    color:var(--parchment-dim);
+    font-size:1.02rem;
+    line-height:1.6;
+    max-width:38ch;
+    margin:0;
+  }
+  .home-hero .rule{
+    width:52px; height:2px; background:var(--brass); margin:22px 0;
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px;
+  }
+  .tabs{
+    display:flex;
+    gap:4px;
+    margin-bottom:22px;
+    background:var(--ink);
+    padding:4px;
+    border-radius:8px;
+  }
+  .tab-btn{
+    flex:1;
+    padding:10px 12px;
+    border:none;
+    background:transparent;
+    color:var(--parchment-dim);
+    font:inherit;
+    font-weight:600;
+    font-size:0.92rem;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .tab-btn.active{ background:var(--panel-2); color:var(--brass-bright); }
+
+  .form-pane{ display:none; flex-direction:column; gap:14px; }
+  .form-pane.active{ display:flex; }
+
+  label{ font-size:0.82rem; color:var(--parchment-dim); }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  input[type=text]{
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--parchment);
+    font:inherit;
+    font-size:1rem;
+    padding:11px 13px;
+    border-radius:7px;
+    outline:none;
+  }
+  input[type=text]:focus{ border-color:var(--brass); }
+  input.code-input{ text-transform:uppercase; letter-spacing:3px; font-weight:600; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:none; border-radius:7px; cursor:pointer;
+    font:inherit; font-weight:600; font-size:0.95rem;
+    padding:12px 16px;
+    transition:filter .15s ease, transform .05s ease;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-brass{ background:var(--brass); color:#1b1006; }
+  .btn-brass:hover{ filter:brightness(1.08); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .error-text{ color:#e08585; font-size:0.85rem; min-height:1.1em; }
+
+  /* ---------- Salle ---------- */
+  #screen-room{ flex-direction:column; height:100vh; }
+  .room-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 22px;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap; gap:10px;
+  }
+  .room-title{ display:flex; align-items:baseline; gap:12px; }
+  .room-title .display{ font-size:1.25rem; }
+  .code-chip{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:6px 10px;
+    border-radius:7px;
+    font-size:0.85rem;
+    color:var(--parchment-dim);
+  }
+  .code-chip b{ color:var(--brass-bright); letter-spacing:2px; }
+  .code-chip button{
+    background:none; border:none; color:var(--parchment-dim); cursor:pointer; font:inherit; padding:0;
+  }
+  .code-chip button:hover{ color:var(--brass-bright); }
+
+  .stage{
+    flex:1;
+    padding:22px;
+    display:grid;
+    gap:16px;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    align-content:start;
+    overflow-y:auto;
+  }
+  .seat{ display:flex; flex-direction:column; gap:8px; }
+  .seat-frame{
+    position:relative;
+    aspect-ratio:4/3;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .seat-frame video{
+    width:100%; height:100%; object-fit:cover; display:block;
+    background:#000;
+  }
+  .seat.self .seat-frame video{ transform:scaleX(-1); }
+  .seat-placeholder{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(160deg, var(--panel-2), var(--panel));
+  }
+  .seat.has-stream .seat-placeholder{ display:none; }
+  .seat.self.cam-off .seat-placeholder{ display:flex; z-index:2; }
+  .seat-initial{
+    width:56px; height:56px; border-radius:50%;
+    background:var(--panel-2); border:1px solid var(--line);
+    color:var(--brass-bright);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-size:1.4rem;
+  }
+  .seat-name{
+    font-size:0.85rem; color:var(--parchment-dim);
+    display:flex; align-items:center; gap:6px;
+    padding:0 2px;
+  }
+  .seat.self .seat-name{ color:var(--brass-bright); }
+
+  .controls{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    padding:18px;
+    border-top:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .ctrl-btn{
+    width:50px; height:50px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--parchment-dim);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .ctrl-btn:hover{ border-color:var(--parchment-dim); color:var(--parchment); }
+  .ctrl-btn.on{ background:var(--brass); border-color:var(--brass); color:#1b1006; }
+  .ctrl-btn.leave{ background:var(--ember); border-color:var(--ember); color:#fff; }
+  .ctrl-btn.leave:hover{ filter:brightness(1.1); }
+  .ctrl-btn svg{ width:20px; height:20px; }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--panel-2); border:1px solid var(--line);
+    padding:11px 18px; border-radius:8px; font-size:0.88rem;
+    color:var(--parchment); opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+    z-index:50;
+  }
+  .toast.show{ opacity:1; }
+
+  @media (max-width:760px){
+    .home-wrap{ grid-template-columns:1fr; gap:34px; }
+    .home-hero{ text-align:center; }
+    .home-hero .rule{ margin:18px auto; }
+    .home-hero p{ margin:0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== ACCUEIL ===================== -->
+<section id="screen-home" class="screen active">
+  <div class="home-wrap">
+    <div class="home-hero">
+      <h1 class="display">La Table</h1>
+      <div class="rule"></div>
+      <p>Une salle pour votre partie de jeu de rôle. Le maître du jeu ouvre la table et partage un code ; chacun le rejoint depuis son navigateur et allume sa caméra quand il est prêt.</p>
+    </div>
+
+    <div class="panel">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="create">Créer une partie</button>
+        <button class="tab-btn" data-tab="join">Rejoindre</button>
+      </div>
+
+      <div class="form-pane active" id="pane-create">
+        <div class="field">
+          <label for="create-name">Votre nom (maître du jeu)</label>
+          <input type="text" id="create-name" maxlength="24" placeholder="ex. Alaric">
+        </div>
+        <button class="btn btn-brass" id="btn-create">Ouvrir la table</button>
+        <div class="error-text" id="error-create"></div>
+      </div>
+
+      <div class="form-pane" id="pane-join">
+        <div class="field">
+          <label for="join-name">Votre nom</label>
+          <input type="text" id="join-name" maxlength="24" placeholder="ex. Elowen">
+        </div>
+        <div class="field">
+          <label for="join-code">Code de la table</label>
+          <input type="text" id="join-code" class="code-input" maxlength="5" placeholder="XXXXX">
+        </div>
+        <button class="btn btn-brass" id="btn-join">Rejoindre la table</button>
+        <div class="error-text" id="error-join"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SALLE ===================== -->
+<section id="screen-room" class="screen">
+  <div class="room-header">
+    <div class="room-title">
+      <span class="display">La Table</span>
+      <span id="room-role" style="color:var(--parchment-dim); font-size:0.85rem;"></span>
+    </div>
+    <div class="code-chip">
+      Code de la table&nbsp;<b id="room-code-display">—</b>
+      <button id="btn-copy-code" title="Copier le code">Copier</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage"></div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="btn-toggle-mic" title="Activer le micro">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a7 7 0 0 1-14 0"/><path d="M12 18v3"/></svg>
+    </button>
+    <button class="ctrl-btn" id="btn-toggle-cam" title="Activer la caméra">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="14" height="12" rx="2.5"/><path d="M22 9.5 16 12l6 2.5v-5Z"/></svg>
+    </button>
+    <button class="ctrl-btn leave" id="btn-leave" title="Quitter la table">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    </button>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const state = {
+    peer:null, isHost:false, myId:null, myName:'', code:'',
+    hostConn:null,
+    participants:new Map(), // id -> {name, conn?, call?}
+    localStream:null, camOn:false, micOn:false
+  };
+
+  // Config réseau : STUN Google + TURN public de secours (nécessaire quand
+  // la connexion directe échoue à cause d'un NAT strict / pare-feu).
+  const PEER_OPTS = {
+    debug: 1,
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+      ]
+    }
+  };
+
+  const $ = sel => document.querySelector(sel);
+  const stage = $('#stage');
+
+  function toast(msg, ms){
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(()=> t.classList.remove('show'), ms || 3200);
+  }
+
+  // ---------------- Accueil : onglets ----------------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.form-pane').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      $('#pane-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function generateCode(){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = '';
+    for(let i=0;i<5;i++) s += chars[Math.floor(Math.random()*chars.length)];
+    return s;
+  }
+
+  function showScreen(name){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    $('#screen-'+name).classList.add('active');
+  }
+
+  // ---------------- Création / connexion ----------------
+  function libraryReady(errorEl){
+    if(typeof Peer === 'undefined'){
+      errorEl.textContent = "La librairie réseau n'a pas pu être chargée (vérifiez votre connexion internet, ou une extension qui bloque unpkg.com) et rechargez la page.";
+      return false;
+    }
+    return true;
+  }
+
+  $('#btn-create').addEventListener('click', ()=>{
+    const name = $('#create-name').value.trim();
+    $('#error-create').textContent = '';
+    if(!name){ $('#error-create').textContent = 'Entrez un nom.'; return; }
+    if(!libraryReady($('#error-create'))) return;
+    $('#btn-create').disabled = true;
+    createRoom(name, ()=> $('#btn-create').disabled = false);
+  });
+
+  $('#btn-join').addEventListener('click', ()=>{
+    const name = $('#join-name').value.trim();
+    const code = $('#join-code').value.trim();
+    $('#error-join').textContent = '';
+    if(!name){ $('#error-join').textContent = 'Entrez un nom.'; return; }
+    if(code.length < 4){ $('#error-join').textContent = 'Entrez le code de la table.'; return; }
+    if(!libraryReady($('#error-join'))) return;
+    $('#btn-join').disabled = true;
+    joinRoom(name, code, ()=> $('#btn-join').disabled = false);
+  });
+
+  function createRoom(name, onFail){
+    state.isHost = true;
+    state.myName = name;
+    state.code = generateCode();
+    const peer = new Peer('jdr-' + state.code, PEER_OPTS);
+    state.peer = peer;
+
+    peer.on('open', id=>{
+      console.log('[La Table] table ouverte, id hôte :', id);
+      state.myId = id;
+      state.participants.clear();
+      enterRoom();
+    });
+    peer.on('error', err=>{
+      console.error('[La Table] erreur hôte', err);
+      if(err.type === 'unavailable-id'){
+        peer.destroy();
+        createRoom(name, onFail); // code déjà pris, on retente
+        return;
+      }
+      $('#error-create').textContent = "Impossible d'ouvrir la table pour l'instant. Réessayez.";
+      if(onFail) onFail();
+    });
+    peer.on('connection', conn => handleIncomingConnection(conn));
+    peer.on('call', call => handleIncomingCall(call));
+  }
+
+  function joinRoom(name, codeRaw, onFail){
+    const code = codeRaw.toUpperCase();
+    state.isHost = false;
+    state.myName = name;
+    state.code = code;
+    const peer = new Peer(undefined, PEER_OPTS);
+    state.peer = peer;
+
+    peer.on('open', id=>{
+      state.myId = id;
+      const conn = peer.connect('jdr-' + code, { reliable:true });
+      state.hostConn = conn;
+      let settled = false;
+
+      conn.on('open', ()=>{
+        console.log('[La Table] connexion au maître du jeu établie');
+        settled = true;
+        conn.send({ type:'join', name });
+        state.participants.clear();
+        enterRoom();
+      });
+      conn.on('data', data => handleHostMessage(data));
+      conn.on('close', ()=>{
+        toast("Le maître du jeu a fermé la table.");
+        leaveRoom();
+      });
+      conn.on('error', e=>{
+        console.error('[La Table] erreur de connexion', e);
+        if(!settled){
+          $('#error-join').textContent = 'Table introuvable. Vérifiez le code.';
+          if(onFail) onFail();
+        }
+      });
+
+      setTimeout(()=>{
+        if(!settled){
+          console.warn('[La Table] connexion toujours en attente après 10s (peer id hôte : jdr-'+code+')');
+          $('#error-join').textContent = "La connexion prend trop de temps. Vérifiez le code et réessayez.";
+          if(onFail) onFail();
+        }
+      }, 10000);
+    });
+    peer.on('call', call => handleIncomingCall(call));
+    peer.on('error', err=>{
+      if(err.type === 'peer-unavailable'){
+        $('#error-join').textContent = 'Table introuvable. Vérifiez le code.';
+      } else {
+        $('#error-join').textContent = 'Connexion impossible : ' + err.type + '. Réessayez.';
+      }
+      if(onFail) onFail();
+    });
+  }
+
+  // ---------------- Signalisation (hôte) ----------------
+  function handleIncomingConnection(conn){
+    conn.on('data', data=>{
+      if(data.type === 'join'){
+        state.participants.set(conn.peer, { name:data.name, conn });
+        addSeat(conn.peer, data.name);
+
+        const list = [{ id: state.myId, name: state.myName }];
+        state.participants.forEach((p,id)=>{ if(id !== conn.peer) list.push({ id, name:p.name }); });
+        conn.send({ type:'peer-list', peers:list });
+
+        broadcast({ type:'peer-joined', id:conn.peer, name:data.name }, conn.peer);
+        toast(data.name + ' a rejoint la table.');
+
+        if(state.localStream) callPeer(conn.peer);
+      }
+    });
+    conn.on('close', ()=>{
+      const p = state.participants.get(conn.peer);
+      if(p){ toast(p.name + ' a quitté la table.'); }
+      removeParticipant(conn.peer);
+      broadcast({ type:'peer-left', id:conn.peer });
+    });
+  }
+
+  function broadcast(msg, exceptId){
+    state.participants.forEach((p,id)=>{
+      if(id !== exceptId && p.conn) p.conn.send(msg);
+    });
+  }
+
+  // ---------------- Signalisation (invité) ----------------
+  function handleHostMessage(data){
+    if(data.type === 'peer-list'){
+      data.peers.forEach(p=>{
+        if(p.id !== state.myId && !state.participants.has(p.id)){
+          state.participants.set(p.id, { name:p.name });
+          addSeat(p.id, p.name);
+          if(state.localStream) callPeer(p.id);
+        }
+      });
+    } else if(data.type === 'peer-joined'){
+      if(data.id !== state.myId && !state.participants.has(data.id)){
+        state.participants.set(data.id, { name:data.name });
+        addSeat(data.id, data.name);
+        toast(data.name + ' a rejoint la table.');
+        if(state.localStream) callPeer(data.id);
+      }
+    } else if(data.type === 'peer-left'){
+      const p = state.participants.get(data.id);
+      if(p){ toast(p.name + ' a quitté la table.'); }
+      removeParticipant(data.id);
+    }
+  }
+
+  // ---------------- Appels vidéo ----------------
+  function callPeer(id){
+    if(!state.peer || !state.localStream) return;
+    const call = state.peer.call(id, state.localStream, { metadata:{ name: state.myName } });
+    if(call) registerCall(id, call);
+  }
+
+  function registerCall(id, call){
+    const p = state.participants.get(id);
+    if(p) p.call = call;
+    call.on('stream', stream => attachStream(id, stream));
+    call.on('close', ()=> {});
+  }
+
+  function handleIncomingCall(call){
+    call.answer(state.localStream || undefined);
+    const id = call.peer;
+    if(!state.participants.has(id)){
+      const name = (call.metadata && call.metadata.name) || 'Joueur';
+      state.participants.set(id, { name });
+      addSeat(id, name);
+    }
+    registerCall(id, call);
+  }
+
+  // ---------------- Salle : affichage ----------------
+  function enterRoom(){
+    showScreen('room');
+    $('#room-code-display').textContent = state.code;
+    $('#room-role').textContent = state.isHost ? '· maître du jeu' : '· joueur';
+    stage.innerHTML = '';
+    addSeat(state.myId, state.myName + ' (vous)', true);
+    state.participants.forEach((p,id)=> addSeat(id, p.name));
+    updateControlButtons();
+  }
+
+  function addSeat(id, name, isSelf){
+    if(stage.querySelector('[data-id="'+CSS.escape(id)+'"]')) return;
+    const seat = document.createElement('div');
+    seat.className = 'seat' + (isSelf ? ' self' : '');
+    seat.dataset.id = id;
+    seat.innerHTML =
+      '<div class="seat-frame">' +
+        '<video autoplay playsinline' + (isSelf ? ' muted' : '') + '></video>' +
+        '<div class="seat-placeholder"><span class="seat-initial">' + escapeHtml((name||'?').charAt(0).toUpperCase()) + '</span></div>' +
+      '</div>' +
+      '<div class="seat-name">' + escapeHtml(name) + '</div>';
+    stage.appendChild(seat);
+  }
+
+  function removeParticipant(id){
+    state.participants.delete(id);
+    const seat = stage.querySelector('[data-id="'+CSS.escape(id)+'"]');
+    if(seat) seat.remove();
+  }
+
+  function attachStream(id, stream){
+    const seat = stage.querySelector('[data-id="'+CSS.escape(id)+'"]');
+    if(!seat) return;
+    const video = seat.querySelector('video');
+    if(video.srcObject !== stream) video.srcObject = stream;
+    seat.classList.add('has-stream');
+  }
+
+  function setSelfVideo(stream){
+    const seat = stage.querySelector('[data-id="'+CSS.escape(state.myId)+'"]');
+    if(!seat) return;
+    const video = seat.querySelector('video');
+    video.srcObject = stream;
+    seat.classList.add('has-stream');
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------------- Caméra / micro ----------------
+  async function ensureLocalStream(){
+    if(state.localStream) return true;
+    try{
+      state.localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+    } catch(e){
+      toast("Impossible d'accéder à la caméra ou au micro.");
+      return false;
+    }
+    state.localStream.getVideoTracks().forEach(t=> t.enabled = false);
+    state.localStream.getAudioTracks().forEach(t=> t.enabled = false);
+    setSelfVideo(state.localStream);
+    state.participants.forEach((p,id)=> callPeer(id));
+    return true;
+  }
+
+  async function toggleCamera(){
+    const ok = await ensureLocalStream();
+    if(!ok) return;
+    state.camOn = !state.camOn;
+    state.localStream.getVideoTracks().forEach(t=> t.enabled = state.camOn);
+    updateControlButtons();
+    updateSelfPlaceholder();
+  }
+
+  async function toggleMic(){
+    const ok = await ensureLocalStream();
+    if(!ok) return;
+    state.micOn = !state.micOn;
+    state.localStream.getAudioTracks().forEach(t=> t.enabled = state.micOn);
+    updateControlButtons();
+  }
+
+  function updateSelfPlaceholder(){
+    const seat = stage.querySelector('[data-id="'+CSS.escape(state.myId)+'"]');
+    if(!seat) return;
+    seat.classList.toggle('cam-off', !state.camOn);
+  }
+
+  function updateControlButtons(){
+    $('#btn-toggle-cam').classList.toggle('on', state.camOn);
+    $('#btn-toggle-cam').title = state.camOn ? 'Couper la caméra' : 'Activer la caméra';
+    $('#btn-toggle-mic').classList.toggle('on', state.micOn);
+    $('#btn-toggle-mic').title = state.micOn ? 'Couper le micro' : 'Activer le micro';
+  }
+
+  $('#btn-toggle-cam').addEventListener('click', toggleCamera);
+  $('#btn-toggle-mic').addEventListener('click', toggleMic);
+
+  $('#btn-copy-code').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(state.code).then(()=> toast('Code copié.'));
+  });
+
+  $('#btn-leave').addEventListener('click', leaveRoom);
+
+  function leaveRoom(){
+    if(state.localStream){
+      state.localStream.getTracks().forEach(t=> t.stop());
+      state.localStream = null;
+    }
+    if(state.peer){ state.peer.destroy(); state.peer = null; }
+    state.participants.clear();
+    state.camOn = false;
+    state.micOn = false;
+    stage.innerHTML = '';
+    $('#create-name').value = '';
+    $('#join-name').value = '';
+    $('#join-code').value = '';
+    showScreen('home');
+  }
+
+  window.addEventListener('beforeunload', ()=>{
+    if(state.peer) state.peer.destroy();
+  });
+})();
+</script>
+</body>
+</html>
