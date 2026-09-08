@@ -159,32 +159,34 @@
 
   .stage{
     flex:1;
-    padding:22px;
+    padding:16px 6px;
     overflow-y:auto;
   }
   .table-layout{
     display:flex;
-    justify-content:center;
+    justify-content:space-between;
     align-items:flex-start;
-    gap:28px;
+    width:100%;
     min-height:100%;
   }
   .side-col{
     display:flex;
     flex-direction:column;
-    gap:12px;
-    width:150px;
+    gap:10px;
+    width:130px;
     flex-shrink:0;
-    padding-top:8px;
+    padding-top:4px;
   }
-  #side-left{ align-items:flex-end; }
-  #side-right{ align-items:flex-start; }
+  #side-left{ align-items:flex-start; padding-left:2px; }
+  #side-right{ align-items:flex-end; padding-right:2px; }
   .center-col{
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:10px;
-    flex-shrink:0;
+    gap:12px;
+    flex:1;
+    min-width:0;
+    padding:0 12px;
   }
   .center-col .empty-hint{
     color:var(--parchment-dim);
@@ -192,8 +194,8 @@
     text-align:center;
     max-width:180px;
   }
-  .seat{ display:flex; flex-direction:column; gap:6px; width:150px; }
-  .center-col > .seat{ width:230px; }
+  .seat{ display:flex; flex-direction:column; gap:6px; width:130px; }
+  .center-col .seat{ width:190px; }
   .seat-frame{
     position:relative;
     aspect-ratio:4/3;
@@ -216,38 +218,84 @@
   .seat.has-stream .seat-placeholder{ display:none; }
   .seat.self.cam-off .seat-placeholder{ display:flex; z-index:2; }
   .seat-initial{
-    width:40px; height:40px; border-radius:50%;
+    width:36px; height:36px; border-radius:50%;
     background:var(--panel-2); border:1px solid var(--line);
     color:var(--brass-bright);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Fraunces', serif; font-size:1.1rem;
+    font-family:'Fraunces', serif; font-size:1rem;
   }
-  .center-col .seat-initial{ width:56px; height:56px; font-size:1.4rem; }
+  .center-col .seat-initial{ width:48px; height:48px; font-size:1.25rem; }
   .seat-name{
-    font-size:0.78rem; color:var(--parchment-dim);
+    font-size:0.75rem; color:var(--parchment-dim);
     display:flex; align-items:center; gap:6px;
     padding:0 2px;
   }
   .seat.self .seat-name{ color:var(--brass-bright); }
   .seat.mj .seat-name{ color:var(--brass-bright); font-weight:600; }
 
+  .board{
+    position:relative;
+    width:100%;
+    max-width:560px;
+    min-height:140px;
+    border-radius:var(--radius);
+    border:1px dashed var(--line);
+    background:var(--panel);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .board-empty{
+    color:var(--parchment-dim);
+    font-size:0.82rem;
+    text-align:center;
+    max-width:70%;
+    line-height:1.5;
+    padding:20px;
+  }
+  .board img{
+    display:none;
+    width:100%;
+    max-height:60vh;
+    object-fit:contain;
+    background:#000;
+  }
+  .board.has-image{ border-style:solid; }
+  .board.has-image img{ display:block; }
+  .board.has-image .board-empty{ display:none; }
+  .board-clear{
+    display:none;
+    position:absolute; top:8px; right:8px;
+    width:26px; height:26px;
+    border-radius:50%;
+    border:none;
+    background:rgba(27,24,21,0.72);
+    color:var(--parchment);
+    font-size:0.85rem;
+    align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .board-clear:hover{ background:var(--ember); }
+  body.is-host .board.has-image .board-clear{ display:flex; }
+
   /* ---------- Dés ---------- */
   .dice-bar{
     border-top:1px solid var(--line);
-    padding:14px 18px;
+    padding:8px 14px;
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:14px;
+    gap:8px;
   }
   .last-roll{
     display:flex;
     align-items:center;
-    gap:14px;
-    min-height:58px;
+    gap:10px;
+    min-height:38px;
   }
   .last-roll-icon{
-    width:54px; height:54px;
+    width:36px; height:36px;
     flex-shrink:0;
     color:var(--parchment-dim);
   }
@@ -264,10 +312,10 @@
     70%{ transform:rotate(260deg) scale(0.88); }
     100%{ transform:rotate(360deg) scale(1); }
   }
-  .last-roll-text{ display:flex; flex-direction:column; gap:2px; min-width:120px; }
+  .last-roll-text{ display:flex; flex-direction:column; gap:1px; min-width:100px; }
   .last-roll-result{
     font-family:'Fraunces', serif;
-    font-size:2.1rem;
+    font-size:1.4rem;
     line-height:1;
     color:var(--brass-bright);
   }
@@ -277,36 +325,36 @@
     70%{ transform:scale(1.12); opacity:1; }
     100%{ transform:scale(1); }
   }
-  .last-roll-meta{ font-size:0.82rem; color:var(--parchment-dim); }
+  .last-roll-meta{ font-size:0.72rem; color:var(--parchment-dim); }
 
-  .dice-buttons{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .dice-buttons{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
   .die-btn{
-    display:flex; flex-direction:column; align-items:center; gap:4px;
-    width:60px;
-    padding:8px 4px 7px;
-    border-radius:9px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    width:40px;
+    padding:5px 2px 4px;
+    border-radius:7px;
     border:1px solid var(--line);
     background:var(--panel);
     color:var(--parchment-dim);
-    font:inherit; font-weight:600; font-size:0.75rem;
+    font:inherit; font-weight:600; font-size:0.6rem;
     cursor:pointer;
     transition:background .15s ease, border-color .15s ease, color .15s ease, transform .05s ease;
   }
   .die-btn svg{
-    width:30px; height:30px;
+    width:19px; height:19px;
     fill:none; stroke:currentColor; stroke-width:2; stroke-linejoin:round;
   }
   .die-btn:hover{ border-color:var(--brass); color:var(--brass-bright); }
   .die-btn:active{ transform:translateY(1px) scale(0.96); }
 
   .controls{
-    display:flex; align-items:center; justify-content:center; gap:12px;
-    padding:18px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px;
     border-top:1px solid var(--line);
     flex-wrap:wrap;
   }
   .ctrl-btn{
-    width:50px; height:50px;
+    width:36px; height:36px;
     border-radius:50%;
     border:1px solid var(--line);
     background:var(--panel);
@@ -319,7 +367,7 @@
   .ctrl-btn.on{ background:var(--brass); border-color:var(--brass); color:#1b1006; }
   .ctrl-btn.leave{ background:var(--ember); border-color:var(--ember); color:#fff; }
   .ctrl-btn.leave:hover{ filter:brightness(1.1); }
-  .ctrl-btn svg{ width:20px; height:20px; }
+  .ctrl-btn svg{ width:15px; height:15px; }
 
   .toast{
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
@@ -347,7 +395,8 @@
     }
     #side-left, #side-right{ align-items:flex-start; }
     .side-col .seat{ width:110px; }
-    .center-col > .seat{ width:180px; }
+    .center-col .seat{ width:180px; }
+    .board{ max-width:100%; }
   }
 </style>
 </head>
@@ -409,7 +458,14 @@
   <div class="stage" id="stage">
     <div class="table-layout">
       <div class="side-col" id="side-left"></div>
-      <div class="center-col" id="mj-slot"></div>
+      <div class="center-col">
+        <div id="mj-slot"></div>
+        <div class="board" id="board">
+          <div class="board-empty" id="board-empty">Aucune image partagée<br><span id="board-hint"></span></div>
+          <img id="board-img" alt="Image partagée par le MJ">
+          <button class="board-clear" id="board-clear" title="Effacer l'image">✕</button>
+        </div>
+      </div>
       <div class="side-col" id="side-right"></div>
     </div>
   </div>
@@ -668,6 +724,63 @@
     });
   }
 
+  // ---------------- Tableau d'images (MJ) ----------------
+  function showBoardImage(dataUrl){
+    const board = $('#board');
+    $('#board-img').src = dataUrl;
+    board.classList.add('has-image');
+  }
+
+  function clearBoardImage(){
+    const board = $('#board');
+    board.classList.remove('has-image');
+    $('#board-img').removeAttribute('src');
+  }
+
+  function downscaleImage(dataUrl, maxDim, cb){
+    const img = new Image();
+    img.onload = ()=>{
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if(w > maxDim || h > maxDim){
+        const scale = maxDim / Math.max(w, h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = dataUrl;
+  }
+
+  window.addEventListener('paste', e=>{
+    if(!state.isHost || !state.myId) return;
+    if(!$('#screen-room').classList.contains('active')) return;
+    const items = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).items : null;
+    if(!items) return;
+    for(const item of items){
+      if(item.type.indexOf('image') !== -1){
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          downscaleImage(reader.result, 1100, dataUrl=>{
+            showBoardImage(dataUrl);
+            broadcast({ type:'board-image', dataUrl });
+          });
+        };
+        reader.readAsDataURL(blob);
+        e.preventDefault();
+        break;
+      }
+    }
+  });
+
+  $('#board-clear').addEventListener('click', ()=>{
+    clearBoardImage();
+    broadcast({ type:'board-clear' });
+  });
+
   // ---------------- Signalisation (invité) ----------------
   function handleHostMessage(data){
     if(data.type === 'peer-list'){
@@ -691,6 +804,10 @@
       removeParticipant(data.id);
     } else if(data.type === 'dice-roll'){
       applyDiceRoll(data);
+    } else if(data.type === 'board-image'){
+      showBoardImage(data.dataUrl);
+    } else if(data.type === 'board-clear'){
+      clearBoardImage();
     }
   }
 
@@ -724,6 +841,11 @@
     showScreen('room');
     $('#room-code-display').textContent = state.code;
     $('#room-role').textContent = state.isHost ? '· maître du jeu' : '· joueur';
+    document.body.classList.toggle('is-host', state.isHost);
+    $('#board-hint').textContent = state.isHost
+      ? 'Copiez une image (Ctrl+C) puis collez-la ici (Ctrl+V) pour la montrer aux joueurs.'
+      : "Le maître du jeu peut y afficher une carte ou une illustration.";
+    clearBoardImage();
     state.hostId = state.isHost ? state.myId : ('jdr-' + state.code);
     state.sideToggle = 0;
     $('#side-left').innerHTML = '';
@@ -915,6 +1037,8 @@
     $('#side-right').innerHTML = '';
     $('#mj-slot').innerHTML = '';
     resetLastRoll();
+    clearBoardImage();
+    document.body.classList.remove('is-host');
     $('#create-name').value = '';
     $('#join-name').value = '';
     $('#join-code').value = '';
