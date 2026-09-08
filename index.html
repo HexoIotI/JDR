@@ -233,6 +233,54 @@
   .seat.self .seat-name{ color:var(--brass-bright); }
   .seat.mj .seat-name{ color:var(--brass-bright); font-weight:600; }
 
+  .stats{ display:flex; justify-content:center; gap:12px; margin-top:2px; }
+  .stat-block{ display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .stat-icons{ display:flex; gap:2px; }
+  .stat-icon svg{
+    width:12px; height:12px;
+    fill:none; stroke:var(--parchment-dim); stroke-width:1.6; opacity:0.45;
+  }
+  .stat-icon.filled svg{ stroke:none; opacity:1; }
+  .stat-block[data-kind="hp"] .stat-icon.filled svg{ fill:var(--ember); }
+  .stat-block[data-kind="energy"] .stat-icon.filled svg{ fill:var(--brass-bright); }
+  @keyframes stat-pulse{
+    0%{ transform:scale(1); }
+    45%{ transform:scale(1.35); }
+    100%{ transform:scale(1); }
+  }
+  .stat-icons.pulse{ animation:stat-pulse .3s ease; }
+  .stat-controls{ display:none; gap:5px; }
+  .host-only{ display:none; }
+  body.is-host .host-only{ display:flex; }
+  .stat-btn{
+    width:15px; height:15px;
+    border-radius:4px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--parchment-dim);
+    font:inherit; font-size:0.62rem; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    padding:0; cursor:pointer;
+    transition:border-color .15s ease, color .15s ease, transform .05s ease;
+  }
+  .stat-btn:hover{ border-color:var(--brass); color:var(--brass-bright); }
+  .stat-btn:active{ transform:scale(0.88); }
+
+  .icon-btn{
+    width:26px; height:26px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--parchment-dim);
+    font-size:0.85rem;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .icon-btn:hover{ border-color:var(--brass); color:var(--brass-bright); }
+  .icon-btn.host-only{ display:none; }
+  body.is-host .icon-btn.host-only{ display:flex; }
+
   .board{
     position:relative;
     width:100%;
@@ -422,6 +470,10 @@
           <label for="create-name">Votre nom (maître du jeu)</label>
           <input type="text" id="create-name" maxlength="24" placeholder="ex. Alaric">
         </div>
+        <div class="field">
+          <label for="import-roster-input">Reprendre une sauvegarde (optionnel)</label>
+          <input type="file" id="import-roster-input" accept="application/json">
+        </div>
         <button class="btn btn-brass" id="btn-create">Ouvrir la table</button>
         <div class="error-text" id="error-create"></div>
       </div>
@@ -453,6 +505,7 @@
       Code de la table&nbsp;<b id="room-code-display">—</b>
       <button id="btn-copy-code" title="Copier le code">Copier</button>
     </div>
+    <button class="icon-btn host-only" id="btn-export-roster" title="Sauvegarder les données des joueurs">💾</button>
   </div>
 
   <div class="stage" id="stage">
@@ -531,8 +584,20 @@
     peer:null, isHost:false, myId:null, myName:'', code:'',
     hostConn:null, hostId:null, sideToggle:0,
     participants:new Map(), // id -> {name, conn?, call?}
+    stats:new Map(),        // id -> {hp, energy}  (joueurs uniquement, pas le MJ)
+    roster:{},              // nom (minuscule) -> {hp, energy}, persisté dans le navigateur
     localStream:null, camOn:false, micOn:false
   };
+
+  function loadRoster(){
+    try{ return JSON.parse(localStorage.getItem('la-table-roster') || '{}'); }
+    catch(e){ return {}; }
+  }
+  function saveRoster(){
+    try{ localStorage.setItem('la-table-roster', JSON.stringify(state.roster)); }
+    catch(e){ /* stockage indisponible, tant pis */ }
+  }
+  state.roster = loadRoster();
 
   // Config réseau : STUN Google + TURN public de secours (nécessaire quand
   // la connexion directe échoue à cause d'un NAT strict / pare-feu).
@@ -694,14 +759,24 @@
   function handleIncomingConnection(conn){
     conn.on('data', data=>{
       if(data.type === 'join'){
+        const stats = statsFor(data.name);
+        state.stats.set(conn.peer, stats);
         state.participants.set(conn.peer, { name:data.name, conn });
         addSeat(conn.peer, data.name);
+        renderStat(conn.peer, 'hp', stats.hp);
+        renderStat(conn.peer, 'energy', stats.energy);
 
         const list = [{ id: state.myId, name: state.myName }];
-        state.participants.forEach((p,id)=>{ if(id !== conn.peer) list.push({ id, name:p.name }); });
+        state.participants.forEach((p,id)=>{
+          if(id !== conn.peer){
+            const st = state.stats.get(id) || { hp:5, energy:5 };
+            list.push({ id, name:p.name, hp:st.hp, energy:st.energy });
+          }
+        });
         conn.send({ type:'peer-list', peers:list });
+        conn.send({ type:'your-stats', hp:stats.hp, energy:stats.energy });
 
-        broadcast({ type:'peer-joined', id:conn.peer, name:data.name }, conn.peer);
+        broadcast({ type:'peer-joined', id:conn.peer, name:data.name, hp:stats.hp, energy:stats.energy }, conn.peer);
         toast(data.name + ' a rejoint la table.');
 
         if(state.localStream) callPeer(conn.peer);
@@ -788,6 +863,11 @@
         if(p.id !== state.myId && !state.participants.has(p.id)){
           state.participants.set(p.id, { name:p.name });
           addSeat(p.id, p.name);
+          if(p.hp != null){
+            state.stats.set(p.id, { hp:p.hp, energy:p.energy });
+            renderStat(p.id, 'hp', p.hp);
+            renderStat(p.id, 'energy', p.energy);
+          }
           if(state.localStream) callPeer(p.id);
         }
       });
@@ -795,6 +875,11 @@
       if(data.id !== state.myId && !state.participants.has(data.id)){
         state.participants.set(data.id, { name:data.name });
         addSeat(data.id, data.name);
+        if(data.hp != null){
+          state.stats.set(data.id, { hp:data.hp, energy:data.energy });
+          renderStat(data.id, 'hp', data.hp);
+          renderStat(data.id, 'energy', data.energy);
+        }
         toast(data.name + ' a rejoint la table.');
         if(state.localStream) callPeer(data.id);
       }
@@ -808,6 +893,16 @@
       showBoardImage(data.dataUrl);
     } else if(data.type === 'board-clear'){
       clearBoardImage();
+    } else if(data.type === 'stats-update'){
+      let s = state.stats.get(data.id);
+      if(!s){ s = { hp:5, energy:5 }; state.stats.set(data.id, s); }
+      s.hp = data.hp; s.energy = data.energy;
+      renderStat(data.id, 'hp', s.hp);
+      renderStat(data.id, 'energy', s.energy);
+    } else if(data.type === 'your-stats'){
+      state.stats.set(state.myId, { hp:data.hp, energy:data.energy });
+      renderStat(state.myId, 'hp', data.hp);
+      renderStat(state.myId, 'energy', data.energy);
     }
   }
 
@@ -852,9 +947,26 @@
     $('#side-right').innerHTML = '';
     $('#mj-slot').innerHTML = '';
     resetLastRoll();
+    state.stats.clear();
     addSeat(state.myId, state.myName + ' (vous)', true);
+    if(!state.isHost){
+      const mine = statsFor(state.myName);
+      state.stats.set(state.myId, mine);
+      renderStat(state.myId, 'hp', mine.hp);
+      renderStat(state.myId, 'energy', mine.energy);
+    }
     state.participants.forEach((p,id)=> addSeat(id, p.name));
     updateControlButtons();
+  }
+
+  function statBlockHtml(kind){
+    return '<div class="stat-block" data-kind="' + kind + '">' +
+      '<div class="stat-icons"></div>' +
+      '<div class="stat-controls host-only">' +
+        '<button class="stat-btn" data-delta="-1">−</button>' +
+        '<button class="stat-btn" data-delta="1">+</button>' +
+      '</div>' +
+    '</div>';
   }
 
   function addSeat(id, name, isSelf){
@@ -868,7 +980,8 @@
         '<video autoplay playsinline' + (isSelf ? ' muted' : '') + '></video>' +
         '<div class="seat-placeholder"><span class="seat-initial">' + escapeHtml((name||'?').charAt(0).toUpperCase()) + '</span></div>' +
       '</div>' +
-      '<div class="seat-name">' + escapeHtml(name) + (isMj ? ' 🎲' : '') + '</div>';
+      '<div class="seat-name">' + escapeHtml(name) + (isMj ? ' 🎲' : '') + '</div>' +
+      (isMj ? '' : '<div class="stats">' + statBlockHtml('hp') + statBlockHtml('energy') + '</div>');
 
     if(isMj){
       $('#mj-slot').appendChild(seat);
@@ -904,6 +1017,96 @@
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+
+  // ---------------- Vie / énergie ----------------
+  const HEART_PATH = 'M12 20.5c-.3 0-.6-.1-.8-.3C7.8 17.4 3 13.2 3 9.1 3 6.3 5.2 4 8 4c1.6 0 3.1.8 4 2.1C12.9 4.8 14.4 4 16 4c2.8 0 5 2.3 5 5.1 0 4.1-4.8 8.3-8.2 11.1-.2.2-.5.3-.8.3z';
+  const BOLT_PATH  = 'M13 2 4 14h6l-1 8 10-12h-6l1-8z';
+
+  function statIconHtml(kind, filled){
+    const path = (kind === 'hp') ? HEART_PATH : BOLT_PATH;
+    return '<span class="stat-icon' + (filled ? ' filled' : '') + '"><svg viewBox="0 0 24 24"><path d="' + path + '"/></svg></span>';
+  }
+
+  function renderStat(seatId, kind, value){
+    const seat = stage.querySelector('[data-id="'+CSS.escape(seatId)+'"]');
+    if(!seat) return;
+    const block = seat.querySelector('.stat-block[data-kind="'+kind+'"]');
+    if(!block) return;
+    const box = block.querySelector('.stat-icons');
+    let html = '';
+    for(let i=1;i<=5;i++) html += statIconHtml(kind, i<=value);
+    box.innerHTML = html;
+    box.classList.remove('pulse');
+    void box.offsetWidth;
+    box.classList.add('pulse');
+  }
+
+  function statNameFor(id){
+    if(id === state.myId) return state.myName;
+    const p = state.participants.get(id);
+    return p ? p.name : null;
+  }
+
+  function adjustStat(id, kind, delta){
+    let s = state.stats.get(id);
+    if(!s){ s = { hp:5, energy:5 }; state.stats.set(id, s); }
+    s[kind] = Math.max(0, Math.min(5, s[kind] + delta));
+    renderStat(id, kind, s[kind]);
+    broadcast({ type:'stats-update', id, hp:s.hp, energy:s.energy });
+    const name = statNameFor(id);
+    if(name){
+      state.roster[name.trim().toLowerCase()] = { hp:s.hp, energy:s.energy };
+      saveRoster();
+    }
+  }
+
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest('.stat-btn');
+    if(!btn || !state.isHost) return;
+    const seat = btn.closest('.seat');
+    const block = btn.closest('.stat-block');
+    if(!seat || !block) return;
+    adjustStat(seat.dataset.id, block.dataset.kind, parseInt(btn.dataset.delta, 10));
+  });
+
+  function statsFor(name){
+    if(!name) return { hp:5, energy:5 };
+    const saved = state.roster[name.trim().toLowerCase()];
+    return saved ? { hp:saved.hp, energy:saved.energy } : { hp:5, energy:5 };
+  }
+
+  // ---------------- Sauvegarde / import ----------------
+  function exportRoster(){
+    const blob = new Blob([JSON.stringify(state.roster, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'la-table-sauvegarde.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast('Sauvegarde téléchargée.');
+  }
+  $('#btn-export-roster').addEventListener('click', exportRoster);
+
+  $('#import-roster-input').addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const data = JSON.parse(reader.result);
+        state.roster = Object.assign({}, state.roster, data);
+        saveRoster();
+        toast('Sauvegarde chargée (' + Object.keys(data).length + ' personnage(s)).');
+      } catch(err){
+        toast('Fichier de sauvegarde invalide.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
 
   // ---------------- Dés ----------------
   const DICE_ICONS = {
@@ -1031,6 +1234,7 @@
     }
     if(state.peer){ state.peer.destroy(); state.peer = null; }
     state.participants.clear();
+    state.stats.clear();
     state.camOn = false;
     state.micOn = false;
     $('#side-left').innerHTML = '';
