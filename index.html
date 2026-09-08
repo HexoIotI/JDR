@@ -233,9 +233,9 @@
   .seat.self .seat-name{ color:var(--brass-bright); }
   .seat.mj .seat-name{ color:var(--brass-bright); font-weight:600; }
 
-  .stats{ display:flex; justify-content:center; gap:12px; margin-top:2px; }
+  .stats{ display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:2px; }
   .stat-block{ display:flex; flex-direction:column; align-items:center; gap:3px; }
-  .stat-icons{ display:flex; gap:2px; }
+  .stat-icons{ display:flex; gap:2px; flex-wrap:wrap; justify-content:center; max-width:120px; }
   .stat-icon svg{
     width:12px; height:12px;
     fill:none; stroke:var(--parchment-dim); stroke-width:1.6; opacity:0.45;
@@ -243,6 +243,12 @@
   .stat-icon.filled svg{ stroke:none; opacity:1; }
   .stat-block[data-kind="hp"] .stat-icon.filled svg{ fill:var(--ember); }
   .stat-block[data-kind="energy"] .stat-icon.filled svg{ fill:var(--brass-bright); }
+  .stat-extra{
+    font-size:0.62rem; font-weight:700; color:var(--parchment-dim);
+    align-self:center; line-height:1;
+  }
+  .stat-block[data-kind="hp"] .stat-extra{ color:var(--ember); }
+  .stat-block[data-kind="energy"] .stat-extra{ color:var(--brass-bright); }
   @keyframes stat-pulse{
     0%{ transform:scale(1); }
     45%{ transform:scale(1.35); }
@@ -1033,8 +1039,11 @@
     const block = seat.querySelector('.stat-block[data-kind="'+kind+'"]');
     if(!block) return;
     const box = block.querySelector('.stat-icons');
+    const shown = Math.max(0, Math.min(value, 10));
     let html = '';
-    for(let i=1;i<=5;i++) html += statIconHtml(kind, i<=value);
+    for(let i=0;i<shown;i++) html += statIconHtml(kind, true);
+    if(value > 10) html += '<span class="stat-extra">+' + (value - 10) + '</span>';
+    if(value <= 0) html = '<span class="stat-extra">0</span>';
     box.innerHTML = html;
     box.classList.remove('pulse');
     void box.offsetWidth;
@@ -1050,7 +1059,7 @@
   function adjustStat(id, kind, delta){
     let s = state.stats.get(id);
     if(!s){ s = { hp:5, energy:5 }; state.stats.set(id, s); }
-    s[kind] = Math.max(0, Math.min(5, s[kind] + delta));
+    s[kind] = Math.max(0, s[kind] + delta);
     renderStat(id, kind, s[kind]);
     broadcast({ type:'stats-update', id, hp:s.hp, energy:s.energy });
     const name = statNameFor(id);
