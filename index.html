@@ -238,47 +238,66 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:10px;
+    gap:14px;
   }
-  .dice-log{
+  .last-roll{
     display:flex;
-    gap:8px;
-    max-width:100%;
-    overflow-x:auto;
-    padding-bottom:2px;
-    min-height:28px;
+    align-items:center;
+    gap:14px;
+    min-height:58px;
   }
-  .dice-chip{
+  .last-roll-icon{
+    width:54px; height:54px;
     flex-shrink:0;
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:20px;
-    padding:5px 12px;
-    font-size:0.8rem;
     color:var(--parchment-dim);
-    white-space:nowrap;
-    animation:dice-in .2s ease;
   }
-  .dice-chip b{ color:var(--parchment); font-weight:600; }
-  .dice-chip .dice-result{ color:var(--brass-bright); font-weight:700; }
-  @keyframes dice-in{
-    from{ opacity:0; transform:translateY(4px); }
-    to{ opacity:1; transform:translateY(0); }
+  .last-roll-icon svg{
+    width:100%; height:100%;
+    fill:none; stroke:currentColor; stroke-width:2; stroke-linejoin:round;
   }
+  .last-roll.rolling .last-roll-icon{ color:var(--brass); }
+  .last-roll.rolling .last-roll-icon svg{ animation:die-tumble .55s ease; }
+  .last-roll.revealed .last-roll-icon{ color:var(--brass-bright); }
+  @keyframes die-tumble{
+    0%{ transform:rotate(0deg) scale(1); }
+    35%{ transform:rotate(150deg) scale(1.18); }
+    70%{ transform:rotate(260deg) scale(0.88); }
+    100%{ transform:rotate(360deg) scale(1); }
+  }
+  .last-roll-text{ display:flex; flex-direction:column; gap:2px; min-width:120px; }
+  .last-roll-result{
+    font-family:'Fraunces', serif;
+    font-size:2.1rem;
+    line-height:1;
+    color:var(--brass-bright);
+  }
+  .last-roll.revealed .last-roll-result{ animation:result-pop .28s ease; }
+  @keyframes result-pop{
+    0%{ transform:scale(0.5); opacity:0; }
+    70%{ transform:scale(1.12); opacity:1; }
+    100%{ transform:scale(1); }
+  }
+  .last-roll-meta{ font-size:0.82rem; color:var(--parchment-dim); }
+
   .dice-buttons{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
   .die-btn{
-    min-width:52px;
-    padding:10px 6px;
-    border-radius:8px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    width:60px;
+    padding:8px 4px 7px;
+    border-radius:9px;
     border:1px solid var(--line);
     background:var(--panel);
-    color:var(--parchment);
-    font:inherit; font-weight:600; font-size:0.88rem;
+    color:var(--parchment-dim);
+    font:inherit; font-weight:600; font-size:0.75rem;
     cursor:pointer;
-    transition:background .15s ease, border-color .15s ease, transform .05s ease;
+    transition:background .15s ease, border-color .15s ease, color .15s ease, transform .05s ease;
+  }
+  .die-btn svg{
+    width:30px; height:30px;
+    fill:none; stroke:currentColor; stroke-width:2; stroke-linejoin:round;
   }
   .die-btn:hover{ border-color:var(--brass); color:var(--brass-bright); }
-  .die-btn:active{ transform:translateY(1px); background:var(--brass); color:#1b1006; }
+  .die-btn:active{ transform:translateY(1px) scale(0.96); }
 
   .controls{
     display:flex; align-items:center; justify-content:center; gap:12px;
@@ -396,14 +415,40 @@
   </div>
 
   <div class="dice-bar">
-    <div class="dice-log" id="dice-log"></div>
+    <div class="last-roll" id="last-roll">
+      <div class="last-roll-icon" id="last-roll-icon">
+        <svg viewBox="0 0 44 44" stroke-dasharray="4 4"><polygon points="22,4 38,14 38,30 22,40 6,30 6,14"/></svg>
+      </div>
+      <div class="last-roll-text">
+        <div class="last-roll-result" id="last-roll-result">—</div>
+        <div class="last-roll-meta" id="last-roll-meta">Aucun lancer pour l'instant</div>
+      </div>
+    </div>
     <div class="dice-buttons">
-      <button class="die-btn" data-die="4">d4</button>
-      <button class="die-btn" data-die="6">d6</button>
-      <button class="die-btn" data-die="8">d8</button>
-      <button class="die-btn" data-die="10">d10</button>
-      <button class="die-btn" data-die="20">d20</button>
-      <button class="die-btn" data-die="100">d100</button>
+      <button class="die-btn" data-die="4">
+        <svg viewBox="0 0 44 44"><polygon points="22,6 40,36 4,36"/><line x1="22" y1="6" x2="22" y2="36"/></svg>
+        d4
+      </button>
+      <button class="die-btn" data-die="6">
+        <svg viewBox="0 0 44 44"><rect x="10" y="14" width="22" height="22"/><polyline points="10,14 16,6 38,6 32,14"/><polyline points="32,14 38,6 38,28 32,36"/></svg>
+        d6
+      </button>
+      <button class="die-btn" data-die="8">
+        <svg viewBox="0 0 44 44"><polygon points="22,4 40,22 22,40 4,22"/><line x1="22" y1="4" x2="22" y2="40"/><line x1="4" y1="22" x2="40" y2="22"/></svg>
+        d8
+      </button>
+      <button class="die-btn" data-die="10">
+        <svg viewBox="0 0 44 44"><polygon points="22,4 36,18 30,40 14,40 8,18"/><line x1="22" y1="4" x2="22" y2="40"/></svg>
+        d10
+      </button>
+      <button class="die-btn" data-die="20">
+        <svg viewBox="0 0 44 44"><polygon points="22,4 38,14 38,30 22,40 6,30 6,14"/><line x1="22" y1="4" x2="6" y2="30"/><line x1="22" y1="4" x2="38" y2="30"/><line x1="6" y1="14" x2="38" y2="14"/><line x1="6" y1="14" x2="22" y2="40"/><line x1="38" y1="14" x2="22" y2="40"/></svg>
+        d20
+      </button>
+      <button class="die-btn" data-die="100">
+        <svg viewBox="0 0 44 44"><polygon points="16,3 28,14 24,33 10,33 5,14" opacity="0.5"/><polygon points="28,10 40,21 36,40 22,40 17,21"/></svg>
+        d100
+      </button>
     </div>
   </div>
 
@@ -684,7 +729,7 @@
     $('#side-left').innerHTML = '';
     $('#side-right').innerHTML = '';
     $('#mj-slot').innerHTML = '';
-    $('#dice-log').innerHTML = '';
+    resetLastRoll();
     addSeat(state.myId, state.myName + ' (vous)', true);
     state.participants.forEach((p,id)=> addSeat(id, p.name));
     updateControlButtons();
@@ -739,19 +784,42 @@
   }
 
   // ---------------- Dés ----------------
+  const DICE_ICONS = {
+    4:  '<svg viewBox="0 0 44 44"><polygon points="22,6 40,36 4,36"/><line x1="22" y1="6" x2="22" y2="36"/></svg>',
+    6:  '<svg viewBox="0 0 44 44"><rect x="10" y="14" width="22" height="22"/><polyline points="10,14 16,6 38,6 32,14"/><polyline points="32,14 38,6 38,28 32,36"/></svg>',
+    8:  '<svg viewBox="0 0 44 44"><polygon points="22,4 40,22 22,40 4,22"/><line x1="22" y1="4" x2="22" y2="40"/><line x1="4" y1="22" x2="40" y2="22"/></svg>',
+    10: '<svg viewBox="0 0 44 44"><polygon points="22,4 36,18 30,40 14,40 8,18"/><line x1="22" y1="4" x2="22" y2="40"/></svg>',
+    20: '<svg viewBox="0 0 44 44"><polygon points="22,4 38,14 38,30 22,40 6,30 6,14"/><line x1="22" y1="4" x2="6" y2="30"/><line x1="22" y1="4" x2="38" y2="30"/><line x1="6" y1="14" x2="38" y2="14"/><line x1="6" y1="14" x2="22" y2="40"/><line x1="38" y1="14" x2="22" y2="40"/></svg>',
+    100:'<svg viewBox="0 0 44 44"><polygon points="16,3 28,14 24,33 10,33 5,14" opacity="0.5"/><polygon points="28,10 40,21 36,40 22,40 17,21"/></svg>'
+  };
+
   function rollDie(sides){
     return 1 + Math.floor(Math.random() * sides);
   }
 
+  function resetLastRoll(){
+    const panel = $('#last-roll');
+    clearTimeout(panel._revealTimer);
+    panel.classList.remove('rolling', 'revealed');
+    $('#last-roll-icon').innerHTML = '<svg viewBox="0 0 44 44" stroke-dasharray="4 4"><polygon points="22,4 38,14 38,30 22,40 6,30 6,14"/></svg>';
+    $('#last-roll-result').textContent = '—';
+    $('#last-roll-meta').textContent = "Aucun lancer pour l'instant";
+  }
+
   function applyDiceRoll(roll){
-    const log = $('#dice-log');
-    const chip = document.createElement('div');
-    chip.className = 'dice-chip';
-    chip.innerHTML = '<b>' + escapeHtml(roll.rollerName) + '</b> ' + escapeHtml(roll.die) +
-      ' → <span class="dice-result">' + roll.result + '</span>';
-    log.prepend(chip);
-    while(log.children.length > 15) log.removeChild(log.lastChild);
-    log.scrollLeft = 0;
+    const panel = $('#last-roll');
+    clearTimeout(panel._revealTimer);
+    panel.classList.remove('revealed');
+    panel.classList.remove('rolling');
+    void panel.offsetWidth; // relance l'animation même si le même dé est rejoué
+    $('#last-roll-icon').innerHTML = DICE_ICONS[roll.sides] || DICE_ICONS[6];
+    panel.classList.add('rolling');
+    panel._revealTimer = setTimeout(()=>{
+      $('#last-roll-result').textContent = roll.result;
+      $('#last-roll-meta').textContent = roll.rollerName + ' · ' + roll.die;
+      panel.classList.remove('rolling');
+      panel.classList.add('revealed');
+    }, 550);
   }
 
   function sendDiceRoll(roll){
@@ -771,6 +839,7 @@
         rollerId: state.myId,
         rollerName: state.myName,
         die: 'd' + sides,
+        sides: sides,
         result: rollDie(sides)
       };
       applyDiceRoll(roll);
@@ -845,7 +914,7 @@
     $('#side-left').innerHTML = '';
     $('#side-right').innerHTML = '';
     $('#mj-slot').innerHTML = '';
-    $('#dice-log').innerHTML = '';
+    resetLastRoll();
     $('#create-name').value = '';
     $('#join-name').value = '';
     $('#join-code').value = '';
@@ -859,4 +928,3 @@
 </script>
 </body>
 </html>
-
