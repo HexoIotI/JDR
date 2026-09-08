@@ -160,13 +160,40 @@
   .stage{
     flex:1;
     padding:22px;
-    display:grid;
-    gap:16px;
-    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-    align-content:start;
     overflow-y:auto;
   }
-  .seat{ display:flex; flex-direction:column; gap:8px; }
+  .table-layout{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    gap:28px;
+    min-height:100%;
+  }
+  .side-col{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    width:150px;
+    flex-shrink:0;
+    padding-top:8px;
+  }
+  #side-left{ align-items:flex-end; }
+  #side-right{ align-items:flex-start; }
+  .center-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .center-col .empty-hint{
+    color:var(--parchment-dim);
+    font-size:0.8rem;
+    text-align:center;
+    max-width:180px;
+  }
+  .seat{ display:flex; flex-direction:column; gap:6px; width:150px; }
+  .center-col > .seat{ width:230px; }
   .seat-frame{
     position:relative;
     aspect-ratio:4/3;
@@ -175,6 +202,7 @@
     border-radius:var(--radius);
     overflow:hidden;
   }
+  .center-col .seat-frame{ border-color:var(--brass); box-shadow:0 0 0 1px rgba(192,138,62,0.25); }
   .seat-frame video{
     width:100%; height:100%; object-fit:cover; display:block;
     background:#000;
@@ -188,18 +216,69 @@
   .seat.has-stream .seat-placeholder{ display:none; }
   .seat.self.cam-off .seat-placeholder{ display:flex; z-index:2; }
   .seat-initial{
-    width:56px; height:56px; border-radius:50%;
+    width:40px; height:40px; border-radius:50%;
     background:var(--panel-2); border:1px solid var(--line);
     color:var(--brass-bright);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Fraunces', serif; font-size:1.4rem;
+    font-family:'Fraunces', serif; font-size:1.1rem;
   }
+  .center-col .seat-initial{ width:56px; height:56px; font-size:1.4rem; }
   .seat-name{
-    font-size:0.85rem; color:var(--parchment-dim);
+    font-size:0.78rem; color:var(--parchment-dim);
     display:flex; align-items:center; gap:6px;
     padding:0 2px;
   }
   .seat.self .seat-name{ color:var(--brass-bright); }
+  .seat.mj .seat-name{ color:var(--brass-bright); font-weight:600; }
+
+  /* ---------- Dés ---------- */
+  .dice-bar{
+    border-top:1px solid var(--line);
+    padding:14px 18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  .dice-log{
+    display:flex;
+    gap:8px;
+    max-width:100%;
+    overflow-x:auto;
+    padding-bottom:2px;
+    min-height:28px;
+  }
+  .dice-chip{
+    flex-shrink:0;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:5px 12px;
+    font-size:0.8rem;
+    color:var(--parchment-dim);
+    white-space:nowrap;
+    animation:dice-in .2s ease;
+  }
+  .dice-chip b{ color:var(--parchment); font-weight:600; }
+  .dice-chip .dice-result{ color:var(--brass-bright); font-weight:700; }
+  @keyframes dice-in{
+    from{ opacity:0; transform:translateY(4px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .dice-buttons{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .die-btn{
+    min-width:52px;
+    padding:10px 6px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--parchment);
+    font:inherit; font-weight:600; font-size:0.88rem;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .die-btn:hover{ border-color:var(--brass); color:var(--brass-bright); }
+  .die-btn:active{ transform:translateY(1px); background:var(--brass); color:#1b1006; }
 
   .controls{
     display:flex; align-items:center; justify-content:center; gap:12px;
@@ -238,6 +317,18 @@
     .home-hero{ text-align:center; }
     .home-hero .rule{ margin:18px auto; }
     .home-hero p{ margin:0 auto; }
+
+    .table-layout{ flex-direction:column; align-items:center; gap:16px; }
+    .center-col{ order:1; }
+    #side-left{ order:2; }
+    #side-right{ order:3; }
+    .side-col{
+      flex-direction:row; flex-wrap:wrap; justify-content:center;
+      width:auto; max-width:100%;
+    }
+    #side-left, #side-right{ align-items:flex-start; }
+    .side-col .seat{ width:110px; }
+    .center-col > .seat{ width:180px; }
   }
 </style>
 </head>
@@ -296,7 +387,25 @@
     </div>
   </div>
 
-  <div class="stage" id="stage"></div>
+  <div class="stage" id="stage">
+    <div class="table-layout">
+      <div class="side-col" id="side-left"></div>
+      <div class="center-col" id="mj-slot"></div>
+      <div class="side-col" id="side-right"></div>
+    </div>
+  </div>
+
+  <div class="dice-bar">
+    <div class="dice-log" id="dice-log"></div>
+    <div class="dice-buttons">
+      <button class="die-btn" data-die="4">d4</button>
+      <button class="die-btn" data-die="6">d6</button>
+      <button class="die-btn" data-die="8">d8</button>
+      <button class="die-btn" data-die="10">d10</button>
+      <button class="die-btn" data-die="20">d20</button>
+      <button class="die-btn" data-die="100">d100</button>
+    </div>
+  </div>
 
   <div class="controls">
     <button class="ctrl-btn" id="btn-toggle-mic" title="Activer le micro">
@@ -319,7 +428,7 @@
 
   const state = {
     peer:null, isHost:false, myId:null, myName:'', code:'',
-    hostConn:null,
+    hostConn:null, hostId:null, sideToggle:0,
     participants:new Map(), // id -> {name, conn?, call?}
     localStream:null, camOn:false, micOn:false
   };
@@ -495,6 +604,9 @@
         toast(data.name + ' a rejoint la table.');
 
         if(state.localStream) callPeer(conn.peer);
+      } else if(data.type === 'dice-roll'){
+        applyDiceRoll(data);
+        broadcast(data, conn.peer);
       }
     });
     conn.on('close', ()=>{
@@ -532,6 +644,8 @@
       const p = state.participants.get(data.id);
       if(p){ toast(p.name + ' a quitté la table.'); }
       removeParticipant(data.id);
+    } else if(data.type === 'dice-roll'){
+      applyDiceRoll(data);
     }
   }
 
@@ -565,7 +679,12 @@
     showScreen('room');
     $('#room-code-display').textContent = state.code;
     $('#room-role').textContent = state.isHost ? '· maître du jeu' : '· joueur';
-    stage.innerHTML = '';
+    state.hostId = state.isHost ? state.myId : ('jdr-' + state.code);
+    state.sideToggle = 0;
+    $('#side-left').innerHTML = '';
+    $('#side-right').innerHTML = '';
+    $('#mj-slot').innerHTML = '';
+    $('#dice-log').innerHTML = '';
     addSeat(state.myId, state.myName + ' (vous)', true);
     state.participants.forEach((p,id)=> addSeat(id, p.name));
     updateControlButtons();
@@ -573,16 +692,24 @@
 
   function addSeat(id, name, isSelf){
     if(stage.querySelector('[data-id="'+CSS.escape(id)+'"]')) return;
+    const isMj = (id === state.hostId);
     const seat = document.createElement('div');
-    seat.className = 'seat' + (isSelf ? ' self' : '');
+    seat.className = 'seat' + (isSelf ? ' self' : '') + (isMj ? ' mj' : '');
     seat.dataset.id = id;
     seat.innerHTML =
       '<div class="seat-frame">' +
         '<video autoplay playsinline' + (isSelf ? ' muted' : '') + '></video>' +
         '<div class="seat-placeholder"><span class="seat-initial">' + escapeHtml((name||'?').charAt(0).toUpperCase()) + '</span></div>' +
       '</div>' +
-      '<div class="seat-name">' + escapeHtml(name) + '</div>';
-    stage.appendChild(seat);
+      '<div class="seat-name">' + escapeHtml(name) + (isMj ? ' 🎲' : '') + '</div>';
+
+    if(isMj){
+      $('#mj-slot').appendChild(seat);
+    } else {
+      const container = (state.sideToggle % 2 === 0) ? $('#side-left') : $('#side-right');
+      state.sideToggle++;
+      container.appendChild(seat);
+    }
   }
 
   function removeParticipant(id){
@@ -610,6 +737,46 @@
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+
+  // ---------------- Dés ----------------
+  function rollDie(sides){
+    return 1 + Math.floor(Math.random() * sides);
+  }
+
+  function applyDiceRoll(roll){
+    const log = $('#dice-log');
+    const chip = document.createElement('div');
+    chip.className = 'dice-chip';
+    chip.innerHTML = '<b>' + escapeHtml(roll.rollerName) + '</b> ' + escapeHtml(roll.die) +
+      ' → <span class="dice-result">' + roll.result + '</span>';
+    log.prepend(chip);
+    while(log.children.length > 15) log.removeChild(log.lastChild);
+    log.scrollLeft = 0;
+  }
+
+  function sendDiceRoll(roll){
+    if(state.isHost){
+      broadcast(roll);
+    } else if(state.hostConn){
+      state.hostConn.send(roll);
+    }
+  }
+
+  document.querySelectorAll('.die-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(!state.myId) return;
+      const sides = parseInt(btn.dataset.die, 10);
+      const roll = {
+        type:'dice-roll',
+        rollerId: state.myId,
+        rollerName: state.myName,
+        die: 'd' + sides,
+        result: rollDie(sides)
+      };
+      applyDiceRoll(roll);
+      sendDiceRoll(roll);
+    });
+  });
 
   // ---------------- Caméra / micro ----------------
   async function ensureLocalStream(){
@@ -675,7 +842,10 @@
     state.participants.clear();
     state.camOn = false;
     state.micOn = false;
-    stage.innerHTML = '';
+    $('#side-left').innerHTML = '';
+    $('#side-right').innerHTML = '';
+    $('#mj-slot').innerHTML = '';
+    $('#dice-log').innerHTML = '';
     $('#create-name').value = '';
     $('#join-name').value = '';
     $('#join-code').value = '';
@@ -689,3 +859,4 @@
 </script>
 </body>
 </html>
+
