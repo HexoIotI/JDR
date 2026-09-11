@@ -481,41 +481,51 @@
   .sheet-photo{
     width:92px; height:112px; flex-shrink:0;
     border:2px solid #1b1815; border-radius:2px;
-    background:#fff;
+    background:#fff no-repeat center/cover;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    font-size:0.62rem; color:#8a8072; line-height:1.4; padding:4px; box-sizing:border-box;
   }
+  .sheet-photo:hover{ border-color:var(--brass); }
   .sheet-top-fields{ flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
   .sheet-field label{ display:block; font-size:0.66rem; font-weight:700; margin-bottom:2px; }
-  .sheet-field input, .sheet-body textarea{
+  .sheet-field input, .sheet-body textarea, .rank-select{
     width:100%; border:1.5px solid #1b1815; border-radius:3px;
     padding:4px 6px; font:inherit; font-size:0.8rem; background:#fff; color:#1b1815;
     box-sizing:border-box;
   }
   .sheet-body textarea{ resize:vertical; }
-  .sheet-field input:disabled, .sheet-body textarea:disabled{ background:#e8e1d0; color:#4a4438; }
+  .sheet-field input:disabled, .sheet-body textarea:disabled, .rank-select:disabled{ background:#e8e1d0; color:#4a4438; }
 
-  .sheet-substats{ display:flex; align-items:stretch; gap:6px; margin-bottom:8px; }
-  .sheet-icon-diamond, .sheet-icon-arrow{
-    width:32px; flex-shrink:0;
-    border:2px solid #1b1815; border-radius:4px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:0.9rem;
-  }
-  .sheet-substack{ display:flex; flex-direction:column; gap:4px; flex:1.4; min-width:0; }
+  .sheet-substats{ display:flex; align-items:flex-end; gap:6px; margin-bottom:8px; }
+  .sheet-substack{ display:flex; flex-direction:column; gap:6px; flex:1.4; min-width:0; }
   .sheet-substats > .sheet-field{ flex:1; min-width:0; }
+  .rank-select{
+    width:36px; height:30px; flex-shrink:0;
+    border:2px solid #1b1815; border-radius:4px;
+    text-align:center; font-weight:700; font-size:0.95rem;
+    padding:0;
+  }
 
-  .attr-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:8px; }
-  .attr-box, .skill-box{ border:2px solid #1b1815; border-radius:4px; padding:5px; }
-  .attr-headers{ display:flex; gap:3px; font-size:0.6rem; font-weight:700; text-align:center; margin-bottom:4px; }
-  .attr-headers span{ flex:1; }
-  .attr-inputs{ display:flex; gap:3px; }
-  .attr-inputs input{ width:100%; text-align:center; padding:4px 2px; }
-  .skill-box{ display:flex; flex-direction:column; }
-  .skill-box .sheet-label{ font-size:0.58rem; font-weight:700; text-align:center; margin-bottom:4px; }
-  .skill-box textarea{ flex:1; min-height:48px; }
+  .attr-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:6px; }
+  .attr-box-solo{
+    border:2px solid #1b1815; border-radius:4px; padding:5px;
+    text-align:center;
+  }
+  .attr-box-solo .sheet-label{ font-size:0.62rem; font-weight:700; margin-bottom:4px; }
+  .attr-box-solo input{ width:100%; text-align:center; padding:4px 2px; }
+  .skill-box-wide{
+    border:2px solid #1b1815; border-radius:4px; padding:6px; margin-bottom:8px;
+  }
+  .skill-box-wide .sheet-label{ font-size:0.6rem; font-weight:700; margin-bottom:4px; }
+  .skill-box-wide textarea{ width:100%; min-height:44px; }
 
   .bottom-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .bottom-panel{ border:2px solid #1b1815; border-radius:4px; padding:8px; }
-  .bottom-panel h4{ margin:0 0 6px; font-size:0.76rem; }
+  .bottom-panel h4{ margin:0 0 6px; font-size:0.76rem; display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .argent-inline{ display:flex; align-items:center; gap:4px; font-weight:400; font-size:0.72rem; }
+  .argent-inline input{ width:64px; border:1.5px solid #1b1815; border-radius:3px; padding:3px 5px; font:inherit; font-size:0.75rem; background:#fff; color:#1b1815; }
   .bio-row{ display:flex; gap:5px; margin-bottom:6px; }
   .bio-row .sheet-field{ flex:1; min-width:0; }
   .sheet-sublabel{ display:block; font-size:0.66rem; font-weight:700; margin:4px 0 2px; }
@@ -694,7 +704,8 @@
       <div class="sheet-readonly-badge" id="sheet-readonly-badge">Lecture seule — seul le joueur peut modifier sa fiche.</div>
 
       <div class="sheet-row">
-        <div class="sheet-photo"></div>
+        <div class="sheet-photo" id="sheet-photo">Cliquer pour importer une photo</div>
+        <input type="file" id="sheet-photo-input" accept="image/*" style="display:none">
         <div class="sheet-top-fields">
           <div class="sheet-field"><label>Nom :</label><input id="sheet-nom"></div>
           <div class="sheet-field"><label>Spécialité :</label><input id="sheet-specialite"></div>
@@ -703,32 +714,32 @@
       </div>
 
       <div class="sheet-substats">
-        <div class="sheet-icon-diamond">◆</div>
         <div class="sheet-substack">
           <div class="sheet-field"><label>Charisme :</label><input id="sheet-charisme"></div>
           <div class="sheet-field"><label>Moralité :</label><input id="sheet-moralite"></div>
         </div>
-        <div class="sheet-icon-arrow">»»</div>
+        <select class="rank-select" id="sheet-charisme_rank" title="Valeur (1-6)">
+          <option value="">–</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+        </select>
         <div class="sheet-field"><label>Volonté :</label><input id="sheet-volonte"></div>
+        <select class="rank-select" id="sheet-volonte_rank" title="Valeur (1-6)">
+          <option value="">–</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+        </select>
       </div>
 
       <div class="attr-grid">
-        <div class="attr-box">
-          <div class="attr-headers"><span>Force</span><span>Const.</span></div>
-          <div class="attr-inputs"><input id="sheet-force"><input id="sheet-constitution"></div>
-        </div>
-        <div class="attr-box">
-          <div class="attr-headers"><span>Esprit</span><span>Ora.</span></div>
-          <div class="attr-inputs"><input id="sheet-esprit"><input id="sheet-oratoire"></div>
-        </div>
-        <div class="attr-box">
-          <div class="attr-headers"><span>Dext.</span><span>Furt.</span></div>
-          <div class="attr-inputs"><input id="sheet-dexterite"><input id="sheet-furtivite"></div>
-        </div>
-        <div class="skill-box">
-          <div class="sheet-label">COMPÉTENCE</div>
-          <textarea id="sheet-competence_top"></textarea>
-        </div>
+        <div class="attr-box-solo"><div class="sheet-label">Force</div><input id="sheet-force"></div>
+        <div class="attr-box-solo"><div class="sheet-label">Const.</div><input id="sheet-constitution"></div>
+        <div class="attr-box-solo"><div class="sheet-label">Esprit</div><input id="sheet-esprit"></div>
+        <div class="attr-box-solo"><div class="sheet-label">Ora.</div><input id="sheet-oratoire"></div>
+        <div class="attr-box-solo"><div class="sheet-label">Dext.</div><input id="sheet-dexterite"></div>
+        <div class="attr-box-solo"><div class="sheet-label">Furt.</div><input id="sheet-furtivite"></div>
+      </div>
+      <div class="skill-box-wide">
+        <div class="sheet-label">COMPÉTENCE</div>
+        <textarea id="sheet-competence_top"></textarea>
       </div>
 
       <div class="bottom-grid">
@@ -745,7 +756,7 @@
           <textarea id="sheet-competence_desc"></textarea>
         </div>
         <div class="bottom-panel">
-          <h4>Inventaire</h4>
+          <h4>Inventaire <span class="argent-inline">💰 <input id="sheet-argent" placeholder="0"></span></h4>
           <textarea id="sheet-inventaire"></textarea>
         </div>
       </div>
@@ -1283,13 +1294,13 @@
   // ---------------- Fiche de personnage ----------------
   const SHEET_FIELD_KEYS = [
     'nom','specialite','grade',
-    'charisme','moralite','volonte',
+    'charisme','charisme_rank','moralite','volonte','volonte_rank',
     'force','constitution','esprit','oratoire','dexterite','furtivite',
-    'competence_top','age','taille','poids','talents','competence_desc','inventaire'
+    'competence_top','age','taille','poids','talents','competence_desc','inventaire','argent'
   ];
 
   function blankSheet(){
-    const s = {};
+    const s = { photo:'' };
     SHEET_FIELD_KEYS.forEach(k=> s[k] = '');
     return s;
   }
@@ -1307,15 +1318,27 @@
       el.value = (fields && fields[key]) || '';
       el.disabled = !editable;
     });
+    setSheetPhotoPreview(fields && fields.photo);
   }
 
   function readSheetForm(){
-    const fields = {};
+    const fields = { photo: (state.sheets.get(state.openSheetId) || {}).photo || '' };
     SHEET_FIELD_KEYS.forEach(key=>{
       const el = document.getElementById('sheet-' + key);
       fields[key] = el ? el.value : '';
     });
     return fields;
+  }
+
+  function setSheetPhotoPreview(dataUrl){
+    const box = $('#sheet-photo');
+    if(dataUrl){
+      box.style.backgroundImage = 'url(' + dataUrl + ')';
+      box.textContent = '';
+    } else {
+      box.style.backgroundImage = 'none';
+      box.textContent = 'Cliquer pour importer une photo';
+    }
   }
 
   function seatDisplayName(id){
@@ -1324,13 +1347,22 @@
     return p ? p.name : 'Joueur';
   }
 
+  function sheetCanEdit(id){
+    return id === state.myId || state.isHost;
+  }
+
   function openSheet(id){
     const isOwner = (id === state.myId);
     if(!isOwner && !state.isHost) return; // seuls le propriétaire et le MJ peuvent ouvrir
     state.openSheetId = id;
     $('#sheet-title').textContent = 'Fiche de ' + seatDisplayName(id);
-    $('#sheet-readonly-badge').style.display = isOwner ? 'none' : 'block';
-    fillSheetForm(state.sheets.get(id) || blankSheet(), isOwner);
+    if(!isOwner && state.isHost){
+      $('#sheet-readonly-badge').textContent = 'Vous modifiez la fiche de ' + seatDisplayName(id) + ' en tant que MJ.';
+      $('#sheet-readonly-badge').style.display = 'block';
+    } else {
+      $('#sheet-readonly-badge').style.display = 'none';
+    }
+    fillSheetForm(state.sheets.get(id) || blankSheet(), sheetCanEdit(id));
     $('#sheet-overlay').classList.add('open');
   }
 
@@ -1350,16 +1382,56 @@
     openSheet(btn.dataset.id);
   });
 
+  function syncSheetNow(id, fields){
+    if(state.isHost){
+      const isSelf = (id === state.myId); // ne se produit jamais (le MJ n'a pas de fiche), gardé par sécurité
+      const p = state.participants.get(id);
+      const name = isSelf ? state.myName : (p ? p.name : null);
+      if(name){
+        const key = name.trim().toLowerCase();
+        if(!state.roster[key]) state.roster[key] = {};
+        state.roster[key].sheet = fields;
+        saveRoster();
+      }
+      if(p && p.conn) p.conn.send({ type:'your-sheet', fields });
+    } else if(state.hostConn){
+      state.hostConn.send({ type:'sheet-update', fields });
+    }
+  }
+
+  $('#sheet-photo').addEventListener('click', ()=>{
+    if(!state.openSheetId || !sheetCanEdit(state.openSheetId)) return;
+    $('#sheet-photo-input').click();
+  });
+
+  $('#sheet-photo-input').addEventListener('change', e=>{
+    const file = e.target.files[0];
+    const id = state.openSheetId;
+    if(!file || !id || !sheetCanEdit(id)) { e.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      downscaleImage(reader.result, 400, dataUrl=>{
+        const fields = state.sheets.get(id) || blankSheet();
+        fields.photo = dataUrl;
+        state.sheets.set(id, fields);
+        setSheetPhotoPreview(dataUrl);
+        syncSheetNow(id, fields);
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
   let sheetSaveTimer = null;
-  $('#sheet-body').addEventListener('input', ()=>{
-    if(!state.openSheetId || state.openSheetId !== state.myId) return; // seul le propriétaire édite
+  $('#sheet-body').addEventListener('input', e=>{
+    if(e.target === $('#sheet-photo-input')) return;
+    const id = state.openSheetId;
+    if(!id || !sheetCanEdit(id)) return;
     clearTimeout(sheetSaveTimer);
     sheetSaveTimer = setTimeout(()=>{
       const fields = readSheetForm();
-      state.sheets.set(state.myId, fields);
-      if(state.hostConn){
-        state.hostConn.send({ type:'sheet-update', fields });
-      }
+      state.sheets.set(id, fields);
+      syncSheetNow(id, fields);
     }, 400);
   });
 
@@ -1436,113 +1508,4 @@
   }
 
   function sendDiceRoll(roll){
-    if(state.isHost){
-      broadcast(roll);
-    } else if(state.hostConn){
-      state.hostConn.send(roll);
-    }
-  }
-
-  document.querySelectorAll('.die-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if(!state.myId) return;
-      const sides = parseInt(btn.dataset.die, 10);
-      const roll = {
-        type:'dice-roll',
-        rollerId: state.myId,
-        rollerName: state.myName,
-        die: 'd' + sides,
-        sides: sides,
-        result: rollDie(sides)
-      };
-      applyDiceRoll(roll);
-      sendDiceRoll(roll);
-    });
-  });
-
-  // ---------------- Caméra / micro ----------------
-  async function ensureLocalStream(){
-    if(state.localStream) return true;
-    try{
-      state.localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
-    } catch(e){
-      toast("Impossible d'accéder à la caméra ou au micro.");
-      return false;
-    }
-    state.localStream.getVideoTracks().forEach(t=> t.enabled = false);
-    state.localStream.getAudioTracks().forEach(t=> t.enabled = false);
-    setSelfVideo(state.localStream);
-    state.participants.forEach((p,id)=> callPeer(id));
-    return true;
-  }
-
-  async function toggleCamera(){
-    const ok = await ensureLocalStream();
-    if(!ok) return;
-    state.camOn = !state.camOn;
-    state.localStream.getVideoTracks().forEach(t=> t.enabled = state.camOn);
-    updateControlButtons();
-    updateSelfPlaceholder();
-  }
-
-  async function toggleMic(){
-    const ok = await ensureLocalStream();
-    if(!ok) return;
-    state.micOn = !state.micOn;
-    state.localStream.getAudioTracks().forEach(t=> t.enabled = state.micOn);
-    updateControlButtons();
-  }
-
-  function updateSelfPlaceholder(){
-    const seat = stage.querySelector('[data-id="'+CSS.escape(state.myId)+'"]');
-    if(!seat) return;
-    seat.classList.toggle('cam-off', !state.camOn);
-  }
-
-  function updateControlButtons(){
-    $('#btn-toggle-cam').classList.toggle('on', state.camOn);
-    $('#btn-toggle-cam').title = state.camOn ? 'Couper la caméra' : 'Activer la caméra';
-    $('#btn-toggle-mic').classList.toggle('on', state.micOn);
-    $('#btn-toggle-mic').title = state.micOn ? 'Couper le micro' : 'Activer le micro';
-  }
-
-  $('#btn-toggle-cam').addEventListener('click', toggleCamera);
-  $('#btn-toggle-mic').addEventListener('click', toggleMic);
-
-  $('#btn-copy-code').addEventListener('click', ()=>{
-    navigator.clipboard.writeText(state.code).then(()=> toast('Code copié.'));
-  });
-
-  $('#btn-leave').addEventListener('click', leaveRoom);
-
-  function leaveRoom(){
-    if(state.localStream){
-      state.localStream.getTracks().forEach(t=> t.stop());
-      state.localStream = null;
-    }
-    if(state.peer){ state.peer.destroy(); state.peer = null; }
-    state.participants.clear();
-    state.stats.clear();
-    state.sheets.clear();
-    closeSheet();
-    state.camOn = false;
-    state.micOn = false;
-    $('#side-left').innerHTML = '';
-    $('#side-right').innerHTML = '';
-    $('#mj-slot').innerHTML = '';
-    resetLastRoll();
-    clearBoardImage();
-    document.body.classList.remove('is-host');
-    $('#create-name').value = '';
-    $('#join-name').value = '';
-    $('#join-code').value = '';
-    showScreen('home');
-  }
-
-  window.addEventListener('beforeunload', ()=>{
-    if(state.peer) state.peer.destroy();
-  });
-})();
-</script>
-</body>
-</html>
+    if
