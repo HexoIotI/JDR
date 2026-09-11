@@ -423,6 +423,110 @@
   .ctrl-btn.leave:hover{ filter:brightness(1.1); }
   .ctrl-btn svg{ width:15px; height:15px; }
 
+  .sheet-btn{
+    margin-top:4px;
+    width:100%;
+    padding:4px 0;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--parchment-dim);
+    font:inherit; font-size:0.62rem; font-weight:600;
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .sheet-btn:hover{ border-color:var(--brass); color:var(--brass-bright); }
+
+  /* ---------- Fiche de personnage ---------- */
+  .sheet-overlay{
+    position:fixed; inset:0;
+    background:rgba(10,8,6,0.66);
+    display:none;
+    align-items:center; justify-content:center;
+    z-index:100;
+    padding:18px;
+  }
+  .sheet-overlay.open{ display:flex; }
+  .sheet-modal{
+    background:#f2ece0;
+    color:#1b1815;
+    border-radius:10px;
+    width:100%; max-width:460px;
+    max-height:92vh;
+    overflow-y:auto;
+    box-shadow:0 24px 70px rgba(0,0,0,0.55);
+    animation:sheet-in .18s ease;
+  }
+  @keyframes sheet-in{
+    from{ opacity:0; transform:scale(0.95) translateY(10px); }
+    to{ opacity:1; transform:none; }
+  }
+  .sheet-topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px;
+    border-bottom:2px solid #1b1815;
+    position:sticky; top:0; background:#f2ece0; z-index:1;
+  }
+  .sheet-topbar h3{ margin:0; font-family:'Fraunces', serif; font-size:1.05rem; }
+  .sheet-topbar button{
+    border:none; background:none; font-size:1.15rem; cursor:pointer; color:#1b1815;
+    width:28px; height:28px;
+  }
+  .sheet-body{ padding:12px 16px 20px; }
+  .sheet-readonly-badge{
+    display:none;
+    font-size:0.7rem; color:#7a6f5c; margin-bottom:8px; font-style:italic;
+  }
+  .sheet-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .sheet-photo{
+    width:92px; height:112px; flex-shrink:0;
+    border:2px solid #1b1815; border-radius:2px;
+    background:#fff;
+  }
+  .sheet-top-fields{ flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .sheet-field label{ display:block; font-size:0.66rem; font-weight:700; margin-bottom:2px; }
+  .sheet-field input, .sheet-body textarea{
+    width:100%; border:1.5px solid #1b1815; border-radius:3px;
+    padding:4px 6px; font:inherit; font-size:0.8rem; background:#fff; color:#1b1815;
+    box-sizing:border-box;
+  }
+  .sheet-body textarea{ resize:vertical; }
+  .sheet-field input:disabled, .sheet-body textarea:disabled{ background:#e8e1d0; color:#4a4438; }
+
+  .sheet-substats{ display:flex; align-items:stretch; gap:6px; margin-bottom:8px; }
+  .sheet-icon-diamond, .sheet-icon-arrow{
+    width:32px; flex-shrink:0;
+    border:2px solid #1b1815; border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.9rem;
+  }
+  .sheet-substack{ display:flex; flex-direction:column; gap:4px; flex:1.4; min-width:0; }
+  .sheet-substats > .sheet-field{ flex:1; min-width:0; }
+
+  .attr-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:8px; }
+  .attr-box, .skill-box{ border:2px solid #1b1815; border-radius:4px; padding:5px; }
+  .attr-headers{ display:flex; gap:3px; font-size:0.6rem; font-weight:700; text-align:center; margin-bottom:4px; }
+  .attr-headers span{ flex:1; }
+  .attr-inputs{ display:flex; gap:3px; }
+  .attr-inputs input{ width:100%; text-align:center; padding:4px 2px; }
+  .skill-box{ display:flex; flex-direction:column; }
+  .skill-box .sheet-label{ font-size:0.58rem; font-weight:700; text-align:center; margin-bottom:4px; }
+  .skill-box textarea{ flex:1; min-height:48px; }
+
+  .bottom-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .bottom-panel{ border:2px solid #1b1815; border-radius:4px; padding:8px; }
+  .bottom-panel h4{ margin:0 0 6px; font-size:0.76rem; }
+  .bio-row{ display:flex; gap:5px; margin-bottom:6px; }
+  .bio-row .sheet-field{ flex:1; min-width:0; }
+  .sheet-sublabel{ display:block; font-size:0.66rem; font-weight:700; margin:4px 0 2px; }
+  .bottom-panel textarea{ min-height:56px; }
+  #sheet-inventaire{ min-height:190px; }
+
+  @media (max-width:520px){
+    .bottom-grid{ grid-template-columns:1fr; }
+    .attr-grid{ grid-template-columns:repeat(2, 1fr); }
+  }
+
   .toast{
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
     background:var(--panel-2); border:1px solid var(--line);
@@ -580,6 +684,75 @@
   </div>
 </section>
 
+<div class="sheet-overlay" id="sheet-overlay">
+  <div class="sheet-modal">
+    <div class="sheet-topbar">
+      <h3 id="sheet-title">Fiche de personnage</h3>
+      <button id="sheet-close" title="Fermer">✕</button>
+    </div>
+    <div class="sheet-body" id="sheet-body">
+      <div class="sheet-readonly-badge" id="sheet-readonly-badge">Lecture seule — seul le joueur peut modifier sa fiche.</div>
+
+      <div class="sheet-row">
+        <div class="sheet-photo"></div>
+        <div class="sheet-top-fields">
+          <div class="sheet-field"><label>Nom :</label><input id="sheet-nom"></div>
+          <div class="sheet-field"><label>Spécialité :</label><input id="sheet-specialite"></div>
+          <div class="sheet-field"><label>Grade :</label><input id="sheet-grade"></div>
+        </div>
+      </div>
+
+      <div class="sheet-substats">
+        <div class="sheet-icon-diamond">◆</div>
+        <div class="sheet-substack">
+          <div class="sheet-field"><label>Charisme :</label><input id="sheet-charisme"></div>
+          <div class="sheet-field"><label>Moralité :</label><input id="sheet-moralite"></div>
+        </div>
+        <div class="sheet-icon-arrow">»»</div>
+        <div class="sheet-field"><label>Volonté :</label><input id="sheet-volonte"></div>
+      </div>
+
+      <div class="attr-grid">
+        <div class="attr-box">
+          <div class="attr-headers"><span>Force</span><span>Const.</span></div>
+          <div class="attr-inputs"><input id="sheet-force"><input id="sheet-constitution"></div>
+        </div>
+        <div class="attr-box">
+          <div class="attr-headers"><span>Esprit</span><span>Ora.</span></div>
+          <div class="attr-inputs"><input id="sheet-esprit"><input id="sheet-oratoire"></div>
+        </div>
+        <div class="attr-box">
+          <div class="attr-headers"><span>Dext.</span><span>Furt.</span></div>
+          <div class="attr-inputs"><input id="sheet-dexterite"><input id="sheet-furtivite"></div>
+        </div>
+        <div class="skill-box">
+          <div class="sheet-label">COMPÉTENCE</div>
+          <textarea id="sheet-competence_top"></textarea>
+        </div>
+      </div>
+
+      <div class="bottom-grid">
+        <div class="bottom-panel">
+          <h4>Infos du personnage :</h4>
+          <div class="bio-row">
+            <div class="sheet-field"><label>Âge :</label><input id="sheet-age"></div>
+            <div class="sheet-field"><label>Taille :</label><input id="sheet-taille"></div>
+            <div class="sheet-field"><label>Poids :</label><input id="sheet-poids"></div>
+          </div>
+          <label class="sheet-sublabel" for="sheet-talents">Talents :</label>
+          <textarea id="sheet-talents"></textarea>
+          <label class="sheet-sublabel" for="sheet-competence_desc">Compétence :</label>
+          <textarea id="sheet-competence_desc"></textarea>
+        </div>
+        <div class="bottom-panel">
+          <h4>Inventaire</h4>
+          <textarea id="sheet-inventaire"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -591,6 +764,8 @@
     hostConn:null, hostId:null, sideToggle:0,
     participants:new Map(), // id -> {name, conn?, call?}
     stats:new Map(),        // id -> {hp, energy}  (joueurs uniquement, pas le MJ)
+    sheets:new Map(),       // id -> {nom, specialite, ...}  fiche de personnage
+    openSheetId:null,
     roster:{},              // nom (minuscule) -> {hp, energy}, persisté dans le navigateur
     localStream:null, camOn:false, micOn:false
   };
@@ -766,7 +941,9 @@
     conn.on('data', data=>{
       if(data.type === 'join'){
         const stats = statsFor(data.name);
+        const sheet = sheetFor(data.name);
         state.stats.set(conn.peer, stats);
+        state.sheets.set(conn.peer, sheet);
         state.participants.set(conn.peer, { name:data.name, conn });
         addSeat(conn.peer, data.name);
         renderStat(conn.peer, 'hp', stats.hp);
@@ -781,6 +958,7 @@
         });
         conn.send({ type:'peer-list', peers:list });
         conn.send({ type:'your-stats', hp:stats.hp, energy:stats.energy });
+        conn.send({ type:'your-sheet', fields:sheet });
 
         broadcast({ type:'peer-joined', id:conn.peer, name:data.name, hp:stats.hp, energy:stats.energy }, conn.peer);
         toast(data.name + ' a rejoint la table.');
@@ -789,6 +967,16 @@
       } else if(data.type === 'dice-roll'){
         applyDiceRoll(data);
         broadcast(data, conn.peer);
+      } else if(data.type === 'sheet-update'){
+        state.sheets.set(conn.peer, data.fields);
+        const p = state.participants.get(conn.peer);
+        if(p){
+          const key = p.name.trim().toLowerCase();
+          if(!state.roster[key]) state.roster[key] = {};
+          state.roster[key].sheet = data.fields;
+          saveRoster();
+        }
+        if(state.openSheetId === conn.peer) fillSheetForm(data.fields, false);
       }
     });
     conn.on('close', ()=>{
@@ -909,6 +1097,9 @@
       state.stats.set(state.myId, { hp:data.hp, energy:data.energy });
       renderStat(state.myId, 'hp', data.hp);
       renderStat(state.myId, 'energy', data.energy);
+    } else if(data.type === 'your-sheet'){
+      state.sheets.set(state.myId, data.fields);
+      if(state.openSheetId === state.myId) fillSheetForm(data.fields, true);
     }
   }
 
@@ -954,12 +1145,14 @@
     $('#mj-slot').innerHTML = '';
     resetLastRoll();
     state.stats.clear();
+    state.sheets.clear();
     addSeat(state.myId, state.myName + ' (vous)', true);
     if(!state.isHost){
       const mine = statsFor(state.myName);
       state.stats.set(state.myId, mine);
       renderStat(state.myId, 'hp', mine.hp);
       renderStat(state.myId, 'energy', mine.energy);
+      state.sheets.set(state.myId, sheetFor(state.myName));
     }
     state.participants.forEach((p,id)=> addSeat(id, p.name));
     updateControlButtons();
@@ -987,7 +1180,10 @@
         '<div class="seat-placeholder"><span class="seat-initial">' + escapeHtml((name||'?').charAt(0).toUpperCase()) + '</span></div>' +
       '</div>' +
       '<div class="seat-name">' + escapeHtml(name) + (isMj ? ' 🎲' : '') + '</div>' +
-      (isMj ? '' : '<div class="stats">' + statBlockHtml('hp') + statBlockHtml('energy') + '</div>');
+      (isMj ? '' :
+        '<div class="stats">' + statBlockHtml('hp') + statBlockHtml('energy') + '</div>' +
+        '<button class="sheet-btn' + (isSelf ? '' : ' host-only') + '" data-id="' + escapeHtml(id) + '" title="Fiche de personnage">📜 Fiche</button>'
+      );
 
     if(isMj){
       $('#mj-slot').appendChild(seat);
@@ -1083,6 +1279,89 @@
     const saved = state.roster[name.trim().toLowerCase()];
     return saved ? { hp:saved.hp, energy:saved.energy } : { hp:5, energy:5 };
   }
+
+  // ---------------- Fiche de personnage ----------------
+  const SHEET_FIELD_KEYS = [
+    'nom','specialite','grade',
+    'charisme','moralite','volonte',
+    'force','constitution','esprit','oratoire','dexterite','furtivite',
+    'competence_top','age','taille','poids','talents','competence_desc','inventaire'
+  ];
+
+  function blankSheet(){
+    const s = {};
+    SHEET_FIELD_KEYS.forEach(k=> s[k] = '');
+    return s;
+  }
+
+  function sheetFor(name){
+    if(!name) return blankSheet();
+    const saved = state.roster[name.trim().toLowerCase()];
+    return (saved && saved.sheet) ? Object.assign(blankSheet(), saved.sheet) : blankSheet();
+  }
+
+  function fillSheetForm(fields, editable){
+    SHEET_FIELD_KEYS.forEach(key=>{
+      const el = document.getElementById('sheet-' + key);
+      if(!el) return;
+      el.value = (fields && fields[key]) || '';
+      el.disabled = !editable;
+    });
+  }
+
+  function readSheetForm(){
+    const fields = {};
+    SHEET_FIELD_KEYS.forEach(key=>{
+      const el = document.getElementById('sheet-' + key);
+      fields[key] = el ? el.value : '';
+    });
+    return fields;
+  }
+
+  function seatDisplayName(id){
+    if(id === state.myId) return state.myName;
+    const p = state.participants.get(id);
+    return p ? p.name : 'Joueur';
+  }
+
+  function openSheet(id){
+    const isOwner = (id === state.myId);
+    if(!isOwner && !state.isHost) return; // seuls le propriétaire et le MJ peuvent ouvrir
+    state.openSheetId = id;
+    $('#sheet-title').textContent = 'Fiche de ' + seatDisplayName(id);
+    $('#sheet-readonly-badge').style.display = isOwner ? 'none' : 'block';
+    fillSheetForm(state.sheets.get(id) || blankSheet(), isOwner);
+    $('#sheet-overlay').classList.add('open');
+  }
+
+  function closeSheet(){
+    $('#sheet-overlay').classList.remove('open');
+    state.openSheetId = null;
+  }
+
+  $('#sheet-close').addEventListener('click', closeSheet);
+  $('#sheet-overlay').addEventListener('click', e=>{
+    if(e.target.id === 'sheet-overlay') closeSheet();
+  });
+
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest('.sheet-btn');
+    if(!btn) return;
+    openSheet(btn.dataset.id);
+  });
+
+  let sheetSaveTimer = null;
+  $('#sheet-body').addEventListener('input', ()=>{
+    if(!state.openSheetId || state.openSheetId !== state.myId) return; // seul le propriétaire édite
+    clearTimeout(sheetSaveTimer);
+    sheetSaveTimer = setTimeout(()=>{
+      const fields = readSheetForm();
+      state.sheets.set(state.myId, fields);
+      if(state.hostConn){
+        state.hostConn.send({ type:'sheet-update', fields });
+      }
+    }, 400);
+  });
 
   // ---------------- Sauvegarde / import ----------------
   function exportRoster(){
@@ -1244,6 +1523,8 @@
     if(state.peer){ state.peer.destroy(); state.peer = null; }
     state.participants.clear();
     state.stats.clear();
+    state.sheets.clear();
+    closeSheet();
     state.camOn = false;
     state.micOn = false;
     $('#side-left').innerHTML = '';
