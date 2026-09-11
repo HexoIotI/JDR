@@ -1508,4 +1508,113 @@
   }
 
   function sendDiceRoll(roll){
-    if
+    if(state.isHost){
+      broadcast(roll);
+    } else if(state.hostConn){
+      state.hostConn.send(roll);
+    }
+  }
+
+  document.querySelectorAll('.die-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(!state.myId) return;
+      const sides = parseInt(btn.dataset.die, 10);
+      const roll = {
+        type:'dice-roll',
+        rollerId: state.myId,
+        rollerName: state.myName,
+        die: 'd' + sides,
+        sides: sides,
+        result: rollDie(sides)
+      };
+      applyDiceRoll(roll);
+      sendDiceRoll(roll);
+    });
+  });
+
+  // ---------------- Caméra / micro ----------------
+  async function ensureLocalStream(){
+    if(state.localStream) return true;
+    try{
+      state.localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+    } catch(e){
+      toast("Impossible d'accéder à la caméra ou au micro.");
+      return false;
+    }
+    state.localStream.getVideoTracks().forEach(t=> t.enabled = false);
+    state.localStream.getAudioTracks().forEach(t=> t.enabled = false);
+    setSelfVideo(state.localStream);
+    state.participants.forEach((p,id)=> callPeer(id));
+    return true;
+  }
+
+  async function toggleCamera(){
+    const ok = await ensureLocalStream();
+    if(!ok) return;
+    state.camOn = !state.camOn;
+    state.localStream.getVideoTracks().forEach(t=> t.enabled = state.camOn);
+    updateControlButtons();
+    updateSelfPlaceholder();
+  }
+
+  async function toggleMic(){
+    const ok = await ensureLocalStream();
+    if(!ok) return;
+    state.micOn = !state.micOn;
+    state.localStream.getAudioTracks().forEach(t=> t.enabled = state.micOn);
+    updateControlButtons();
+  }
+
+  function updateSelfPlaceholder(){
+    const seat = stage.querySelector('[data-id="'+CSS.escape(state.myId)+'"]');
+    if(!seat) return;
+    seat.classList.toggle('cam-off', !state.camOn);
+  }
+
+  function updateControlButtons(){
+    $('#btn-toggle-cam').classList.toggle('on', state.camOn);
+    $('#btn-toggle-cam').title = state.camOn ? 'Couper la caméra' : 'Activer la caméra';
+    $('#btn-toggle-mic').classList.toggle('on', state.micOn);
+    $('#btn-toggle-mic').title = state.micOn ? 'Couper le micro' : 'Activer le micro';
+  }
+
+  $('#btn-toggle-cam').addEventListener('click', toggleCamera);
+  $('#btn-toggle-mic').addEventListener('click', toggleMic);
+
+  $('#btn-copy-code').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(state.code).then(()=> toast('Code copié.'));
+  });
+
+  $('#btn-leave').addEventListener('click', leaveRoom);
+
+  function leaveRoom(){
+    if(state.localStream){
+      state.localStream.getTracks().forEach(t=> t.stop());
+      state.localStream = null;
+    }
+    if(state.peer){ state.peer.destroy(); state.peer = null; }
+    state.participants.clear();
+    state.stats.clear();
+    state.sheets.clear();
+    closeSheet();
+    state.camOn = false;
+    state.micOn = false;
+    $('#side-left').innerHTML = '';
+    $('#side-right').innerHTML = '';
+    $('#mj-slot').innerHTML = '';
+    resetLastRoll();
+    clearBoardImage();
+    document.body.classList.remove('is-host');
+    $('#create-name').value = '';
+    $('#join-name').value = '';
+    $('#join-code').value = '';
+    showScreen('home');
+  }
+
+  window.addEventListener('beforeunload', ()=>{
+    if(state.peer) state.peer.destroy();
+  });
+})();
+</script>
+</body>
+</html>
